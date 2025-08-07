@@ -1,0 +1,17 @@
+[build]
+builder = "nixpacks"
+buildCommand = "npm install && npx prisma generate && npm run build"
+
+[deploy]
+startCommand = "npm run start"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 30
+restartPolicyType = "always"
+
+[[services]]
+name = "web"
+internal_port = 3000
+
+[env]
+NODE_ENV = "production"
+PORT = "3000"
