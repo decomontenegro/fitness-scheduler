@@ -1,0 +1,119 @@
+
+> fitness-scheduler@0.1.0 dev
+> next dev --turbopack
+
+   ▲ Next.js 15.4.5 (Turbopack)
+   - Local:        http://localhost:3000
+   - Network:      http://172.16.27.153:3000
+   - Environments: .env.local, .env
+
+ ✓ Starting...
+ ✓ Compiled middleware in 122ms
+ ✓ Ready in 991ms
+ ○ Compiling / ...
+ ✓ Compiled / in 1817ms
+ HEAD / 200 in 2089ms
+ ✓ Compiled /api/auth/login in 246ms
+ POST /api/auth/login 200 in 461ms
+ ✓ Compiled /login in 341ms
+ GET /login 200 in 441ms
+ POST /api/auth/login 200 in 97ms
+ ✓ Compiled middleware in 2ms
+ ✓ Compiled in 6ms
+ ✓ Compiled middleware in 2ms
+ ✓ Compiled in 5ms
+ POST /api/auth/login 200 in 98ms
+ POST /api/auth/login 200 in 91ms
+ ✓ Compiled middleware in 2ms
+ ✓ Compiled in 6ms
+ ✓ Compiled middleware in 1ms
+ ✓ Compiled in 5ms
+ POST /api/auth/login 200 in 99ms
+[Middleware] Attempting to verify token: eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...
+[Middleware] Token verification failed: The edge runtime does not support Node.js 'crypto' module.
+Learn More: https://nextjs.org/docs/messages/node-module-in-edge-runtime
+ POST /api/auth/login 200 in 92ms
+[Middleware] Attempting to verify token: eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...
+[Middleware] Token verification failed: The edge runtime does not support Node.js 'crypto' module.
+Learn More: https://nextjs.org/docs/messages/node-module-in-edge-runtime
+ ✓ Compiled middleware in 2ms
+ ✓ Compiled in 13ms
+ POST /api/auth/login 200 in 96ms
+ ✓ Compiled /api/dashboard/[role] in 168ms
+ ⚠ ./src/lib/auth.ts:3:1
+Ecmascript file had an error
+[0m [90m 1 |[39m [36mimport[39m bcrypt [36mfrom[39m [32m'bcryptjs'[39m[33m;[39m
+ [90m 2 |[39m [36mimport[39m jwt [36mfrom[39m [32m'jsonwebtoken'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m crypto [36mfrom[39m [32m'crypto'[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 4 |[39m [36mimport[39m { prisma } [36mfrom[39m [32m'./prisma'[39m[33m;[39m
+ [90m 5 |[39m [36mimport[39m { [33mNextRequest[39m } [36mfrom[39m [32m'next/server'[39m[33m;[39m
+ [90m 6 |[39m[0m
+
+A Node.js module is loaded ('crypto' at line 3) which is not supported in the Edge Runtime.
+Learn More: https://nextjs.org/docs/messages/node-module-in-edge-runtime
+
+Import trace:
+  ./src/lib/auth.ts
+  ./src/middleware.ts
+
+
+ GET /api/dashboard/client 200 in 568ms
+ POST /api/auth/login 200 in 99ms
+ ⚠ ./src/lib/auth.ts:3:1
+Ecmascript file had an error
+[0m [90m 1 |[39m [36mimport[39m bcrypt [36mfrom[39m [32m'bcryptjs'[39m[33m;[39m
+ [90m 2 |[39m [36mimport[39m jwt [36mfrom[39m [32m'jsonwebtoken'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m crypto [36mfrom[39m [32m'crypto'[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 4 |[39m [36mimport[39m { prisma } [36mfrom[39m [32m'./prisma'[39m[33m;[39m
+ [90m 5 |[39m [36mimport[39m { [33mNextRequest[39m } [36mfrom[39m [32m'next/server'[39m[33m;[39m
+ [90m 6 |[39m[0m
+
+A Node.js module is loaded ('crypto' at line 3) which is not supported in the Edge Runtime.
+Learn More: https://nextjs.org/docs/messages/node-module-in-edge-runtime
+
+Import trace:
+  ./src/lib/auth.ts
+  ./src/middleware.ts
+
+
+ GET /api/dashboard/client 200 in 23ms
+ POST /api/auth/login 200 in 94ms
+ ⚠ ./src/lib/auth.ts:3:1
+Ecmascript file had an error
+[0m [90m 1 |[39m [36mimport[39m bcrypt [36mfrom[39m [32m'bcryptjs'[39m[33m;[39m
+ [90m 2 |[39m [36mimport[39m jwt [36mfrom[39m [32m'jsonwebtoken'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m crypto [36mfrom[39m [32m'crypto'[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 4 |[39m [36mimport[39m { prisma } [36mfrom[39m [32m'./prisma'[39m[33m;[39m
+ [90m 5 |[39m [36mimport[39m { [33mNextRequest[39m } [36mfrom[39m [32m'next/server'[39m[33m;[39m
+ [90m 6 |[39m[0m
+
+A Node.js module is loaded ('crypto' at line 3) which is not supported in the Edge Runtime.
+Learn More: https://nextjs.org/docs/messages/node-module-in-edge-runtime
+
+Import trace:
+  ./src/lib/auth.ts
+  ./src/middleware.ts
+
+
+ GET /api/dashboard/trainer 200 in 23ms
+ ✓ Compiled /_not-found/page in 146ms
+ GET /api/analytics/trainer?period=7d 404 in 207ms
+ ✓ Compiled middleware in 5ms
+ ✓ Compiled in 23ms
+ ✓ Compiled middleware in 3ms
+ ✓ Compiled in 16ms
+ HEAD / 200 in 281ms
+   Reload env: .env.local
+ ✓ Compiled middleware in 3ms
+ ✓ Compiled in 17ms
+ ✓ Compiled middleware in 6ms
+ ✓ Compiled in 49ms
+ ✓ Compiled middleware in 4ms
+ ✓ Compiled in 18ms
+ ✓ Compiled middleware in 1ms
+ ✓ Compiled in 9ms
+ ✓ Compiled in 436ms
+[?25h

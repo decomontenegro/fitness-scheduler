@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Helper - Fitness Scheduler</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .status {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #218838;
+        }
+        .info-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .info-box h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #495057;
+        }
+        .credentials {
+            font-family: monospace;
+            background: white;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 5px 0;
+            border: 1px solid #dee2e6;
+        }
+        .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .loading .spinner {
+            display: block;
+        }
+        .loading button {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏋️ Fitness Scheduler</h1>
+        <p class="subtitle">Helper de Login para Desenvolvimento</p>
+        
+        <div id="status" class="status">
+            Verificando status da autenticação...
+        </div>
+        
+        <div class="btn-group">
+            <button class="btn-primary" onclick="loginAsTrainer()">
+                Login como Trainer
+            </button>
+            <button class="btn-success" onclick="loginAsClient()">
+                Login como Cliente
+            </button>
+        </div>
+        
+        <div class="btn-group">
+            <button class="btn-secondary" onclick="checkAuth()">
+                Verificar Status
+            </button>
+            <button class="btn-secondary" onclick="clearAuth()">
+                Limpar Dados
+            </button>
+        </div>
+        
+        <div class="btn-group">
+            <button class="btn-primary" onclick="goToDashboard()">
+                Ir para Dashboard
+            </button>
+        </div>
+        
+        <div class="spinner"></div>
+        
+        <div class="info-box">
+            <h3>📝 Credenciais de Teste:</h3>
+            <div class="credentials">
+                <strong>Trainer:</strong> test-trainer@fitness.com / 123456
+            </div>
+            <div class="credentials">
+                <strong>Cliente:</strong> test-client@fitness.com / 123456
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check auth status on load
+        window.onload = function() {
+            checkAuth();
+        };
+
+        function setLoading(loading) {
+            const container = document.querySelector('.container');
+            if (loading) {
+                container.classList.add('loading');
+            } else {
+                container.classList.remove('loading');
+            }
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = 'status';
+            if (type === 'success') {
+                statusEl.classList.add('success');
+            } else if (type === 'error') {
+                statusEl.classList.add('error');
+            }
+        }
+
+        async function loginAsTrainer() {
+            await login('test-trainer@fitness.com', '123456', 'TRAINER');
+        }
+
+        async function loginAsClient() {
+            await login('test-client@fitness.com', '123456', 'CLIENT');
+        }
+
+        async function login(email, password, expectedRole) {
+            setLoading(true);
+            updateStatus('Fazendo login...');
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Store auth data
+                    const token = data.accessToken || data.token;
+                    localStorage.setItem('token', token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    
+                    updateStatus(`✅ Login bem-sucedido! Redirecionando...`, 'success');
+                    
+                    // Redirect based on role
+                    setTimeout(() => {
+                        if (data.user.role === 'TRAINER') {
+                            window.location.href = '/dashboard/trainer';
+                        } else {
+                            window.location.href = '/dashboard/client';
+                        }
+                    }, 1000);
+                } else {
+                    updateStatus(`❌ Erro no login: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                updateStatus(`❌ Erro de conexão: ${error.message}`, 'error');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function checkAuth() {
+            const user = localStorage.getItem('user');
+            const token = localStorage.getItem('token');
+            
+            if (user && token) {
+                const userData = JSON.parse(user);
+                updateStatus(`✅ Autenticado como: ${userData.name} (${userData.role})`, 'success');
+            } else {
+                updateStatus('❌ Não autenticado', 'error');
+            }
+        }
+
+        function clearAuth() {
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            updateStatus('✅ Dados de autenticação limpos', 'success');
+        }
+
+        function goToDashboard() {
+            const user = localStorage.getItem('user');
+            if (user) {
+                const userData = JSON.parse(user);
+                if (userData.role === 'TRAINER') {
+                    window.location.href = '/dashboard/trainer';
+                } else {
+                    window.location.href = '/dashboard/client';
+                }
+            } else {
+                updateStatus('❌ Faça login primeiro', 'error');
+            }
+        }
+    </script>
+</body>
+</html>

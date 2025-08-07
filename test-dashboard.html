@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .success {
+            color: green;
+            padding: 10px;
+            background: #d4edda;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .error {
+            color: red;
+            padding: 10px;
+            background: #f8d7da;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .info {
+            color: #004085;
+            padding: 10px;
+            background: #d1ecf1;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🏋️ Fitness Scheduler - Dashboard Test</h1>
+    
+    <div class="container">
+        <h2>1. Login</h2>
+        <input type="email" id="email" placeholder="Email" value="test-trainer@fitness.com">
+        <input type="password" id="password" placeholder="Password" value="123456">
+        <button onclick="login()">Login as Trainer</button>
+        <button onclick="loginClient()">Login as Client</button>
+        <div id="loginResult"></div>
+    </div>
+
+    <div class="container">
+        <h2>2. Test Dashboard API</h2>
+        <button onclick="testTrainerDashboard()">Test Trainer Dashboard</button>
+        <button onclick="testClientDashboard()">Test Client Dashboard</button>
+        <div id="dashboardResult"></div>
+    </div>
+
+    <div class="container">
+        <h2>3. Navigate to Dashboard</h2>
+        <button onclick="goToTrainerDashboard()">Go to Trainer Dashboard</button>
+        <button onclick="goToClientDashboard()">Go to Client Dashboard</button>
+        <button onclick="goToSchedule()">Go to Schedule</button>
+    </div>
+
+    <div class="container">
+        <h2>4. Current Auth Status</h2>
+        <button onclick="checkAuth()">Check Auth Status</button>
+        <button onclick="logout()">Logout</button>
+        <div id="authResult"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3001';
+        let currentToken = null;
+        let currentUser = null;
+
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch(`${API_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password }),
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentToken = data.accessToken || data.token;
+                    currentUser = data.user;
+                    
+                    // Store in localStorage for the app to use
+                    localStorage.setItem('token', currentToken);
+                    localStorage.setItem('user', JSON.stringify(currentUser));
+                    
+                    document.getElementById('loginResult').innerHTML = `
+                        <div class="success">
+                            ✅ Login successful!<br>
+                            User: ${currentUser.name} (${currentUser.role})<br>
+                            Token stored in localStorage
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('loginResult').innerHTML = `
+                        <div class="error">❌ Login failed: ${data.error}</div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('loginResult').innerHTML = `
+                    <div class="error">❌ Error: ${error.message}</div>
+                `;
+            }
+        }
+
+        async function loginClient() {
+            document.getElementById('email').value = 'test-client@fitness.com';
+            document.getElementById('password').value = '123456';
+            await login();
+        }
+
+        async function testTrainerDashboard() {
+            if (!currentToken) {
+                document.getElementById('dashboardResult').innerHTML = `
+                    <div class="error">❌ Please login first</div>
+                `;
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/api/dashboard/trainer`, {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('dashboardResult').innerHTML = `
+                        <div class="success">
+                            ✅ Dashboard API working!
+                            <pre>${JSON.stringify(data.stats, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('dashboardResult').innerHTML = `
+                        <div class="error">❌ Error: ${data.error}</div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('dashboardResult').innerHTML = `
+                    <div class="error">❌ Error: ${error.message}</div>
+                `;
+            }
+        }
+
+        async function testClientDashboard() {
+            if (!currentToken) {
+                document.getElementById('dashboardResult').innerHTML = `
+                    <div class="error">❌ Please login first</div>
+                `;
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/api/dashboard/client`, {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('dashboardResult').innerHTML = `
+                        <div class="success">
+                            ✅ Dashboard API working!
+                            <pre>${JSON.stringify(data.stats, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('dashboardResult').innerHTML = `
+                        <div class="error">❌ Error: ${data.error}</div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('dashboardResult').innerHTML = `
+                    <div class="error">❌ Error: ${error.message}</div>
+                `;
+            }
+        }
+
+        async function checkAuth() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            if (token && user) {
+                const userData = JSON.parse(user);
+                document.getElementById('authResult').innerHTML = `
+                    <div class="info">
+                        📋 Auth Status:<br>
+                        User: ${userData.name}<br>
+                        Role: ${userData.role}<br>
+                        Email: ${userData.email}<br>
+                        Token: ${token.substring(0, 20)}...
+                    </div>
+                `;
+            } else {
+                document.getElementById('authResult').innerHTML = `
+                    <div class="error">❌ Not authenticated</div>
+                `;
+            }
+        }
+
+        async function logout() {
+            try {
+                const response = await fetch(`${API_URL}/api/auth/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}`
+                    },
+                    body: JSON.stringify({ logoutAll: false }),
+                    credentials: 'include'
+                });
+                
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                currentToken = null;
+                currentUser = null;
+                
+                document.getElementById('authResult').innerHTML = `
+                    <div class="success">✅ Logged out successfully</div>
+                `;
+            } catch (error) {
+                document.getElementById('authResult').innerHTML = `
+                    <div class="error">❌ Error: ${error.message}</div>
+                `;
+            }
+        }
+
+        function goToTrainerDashboard() {
+            window.open(`${API_URL}/dashboard/trainer`, '_blank');
+        }
+
+        function goToClientDashboard() {
+            window.open(`${API_URL}/dashboard/client`, '_blank');
+        }
+
+        function goToSchedule() {
+            window.open(`${API_URL}/schedule`, '_blank');
+        }
+
+        // Check auth on load
+        window.onload = () => {
+            checkAuth();
+        };
+    </script>
+</body>
+</html>

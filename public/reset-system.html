@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Sistema - Fitness Scheduler</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+            padding: 40px;
+            background: #2a2a2a;
+            border-radius: 12px;
+            max-width: 500px;
+        }
+        h1 {
+            margin-bottom: 30px;
+        }
+        button {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background: #ef4444;
+        }
+        .success {
+            background: #10b981;
+        }
+        .success:hover {
+            background: #059669;
+        }
+        .message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background: #374151;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Reset do Sistema</h1>
+        <p>Clique no botão abaixo para limpar todos os dados e reiniciar</p>
+        
+        <button onclick="resetEverything()">
+            🗑️ LIMPAR TUDO E REINICIAR
+        </button>
+        
+        <button class="success" onclick="goToLogin()">
+            🔐 IR PARA LOGIN
+        </button>
+        
+        <div id="message" class="message" style="display: none;"></div>
+    </div>
+
+    <script>
+        function resetEverything() {
+            // Clear localStorage
+            localStorage.clear();
+            
+            // Clear sessionStorage
+            sessionStorage.clear();
+            
+            // Clear all cookies
+            document.cookie.split(";").forEach(function(c) { 
+                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+            });
+            
+            // Clear cookies with specific names
+            const cookieNames = ['auth-token', 'access-token', 'refresh-token', 'connect.sid'];
+            cookieNames.forEach(name => {
+                document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+                document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=localhost`;
+            });
+            
+            // Show message
+            const messageEl = document.getElementById('message');
+            messageEl.style.display = 'block';
+            messageEl.innerHTML = '✅ Sistema limpo com sucesso! Redirecionando para login...';
+            
+            // Redirect to login after 2 seconds
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 2000);
+        }
+        
+        function goToLogin() {
+            // Clear everything first
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            // Go directly to login
+            window.location.href = '/login';
+        }
+        
+        // Auto-clear on load
+        window.onload = function() {
+            // Clear any auth data
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            
+            console.log('Sistema resetado. Pronto para novo login.');
+        };
+    </script>
+</body>
+</html>

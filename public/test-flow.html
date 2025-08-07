@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Login Flow - Fitness Scheduler</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f3f4f6;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #111827;
+            margin-bottom: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f9fafb;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .success {
+            background: #10b981;
+        }
+        .success:hover {
+            background: #059669;
+        }
+        .danger {
+            background: #ef4444;
+        }
+        .danger:hover {
+            background: #dc2626;
+        }
+        .log {
+            background: #1f2937;
+            color: #10b981;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 12px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid transparent;
+        }
+        .log-entry.error {
+            color: #ef4444;
+            border-left-color: #ef4444;
+        }
+        .log-entry.success {
+            color: #10b981;
+            border-left-color: #10b981;
+        }
+        .log-entry.info {
+            color: #3b82f6;
+            border-left-color: #3b82f6;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-indicator.online {
+            background: #10b981;
+        }
+        .status-indicator.offline {
+            background: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Login Flow</h1>
+        
+        <div class="test-section">
+            <h3><span class="status-indicator" id="apiStatus"></span>API Status</h3>
+            <button onclick="testAPI()">Test API Health</button>
+            <button onclick="testLogin()">Test Login</button>
+            <button onclick="testDashboardAccess()">Test Dashboard Access</button>
+        </div>
+
+        <div class="test-section">
+            <h3>🔐 Quick Actions</h3>
+            <button onclick="doFullLogin('trainer')" class="success">Login as Trainer</button>
+            <button onclick="doFullLogin('client')" class="success">Login as Client</button>
+            <button onclick="clearAll()" class="danger">Clear All Data</button>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Current State</h3>
+            <div id="currentState">Loading...</div>
+        </div>
+
+        <div class="log" id="log">
+            <div class="log-entry info">Test console initialized...</div>
+        </div>
+    </div>
+
+    <script>
+        const log = (message, type = 'info') => {
+            const logEl = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logEl.appendChild(entry);
+            logEl.scrollTop = logEl.scrollHeight;
+        };
+
+        const updateState = () => {
+            const stateEl = document.getElementById('currentState');
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            const cookies = document.cookie;
+            
+            let html = '<table style="width: 100%;">';
+            html += '<tr><td><strong>Token in localStorage:</strong></td><td>' + (token ? '✅ Present' : '❌ Missing') + '</td></tr>';
+            html += '<tr><td><strong>User in localStorage:</strong></td><td>' + (user ? '✅ ' + JSON.parse(user).email : '❌ Missing') + '</td></tr>';
+            html += '<tr><td><strong>Cookies:</strong></td><td>' + (cookies.includes('auth-token') ? '✅ Has auth-token' : '❌ No auth-token') + '</td></tr>';
+            html += '</table>';
+            
+            stateEl.innerHTML = html;
+        };
+
+        const testAPI = async () => {
+            log('Testing API health...');
+            try {
+                const response = await fetch('/api/health');
+                if (response.ok) {
+                    log('✅ API is healthy', 'success');
+                    document.getElementById('apiStatus').className = 'status-indicator online';
+                } else {
+                    log('❌ API returned error: ' + response.status, 'error');
+                    document.getElementById('apiStatus').className = 'status-indicator offline';
+                }
+            } catch (error) {
+                log('❌ Failed to connect to API: ' + error.message, 'error');
+                document.getElementById('apiStatus').className = 'status-indicator offline';
+            }
+            updateState();
+        };
+
+        const testLogin = async () => {
+            log('Testing login endpoint...');
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'test-trainer@fitness.com',
+                        password: '123456'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    log('✅ Login successful!', 'success');
+                    log('User: ' + data.user.name + ' (' + data.user.role + ')', 'info');
+                    log('Token: ' + (data.accessToken ? 'Present' : 'Missing'), 'info');
+                    
+                    // Save to localStorage
+                    const token = data.accessToken || data.token;
+                    localStorage.setItem('token', token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    
+                    log('✅ Saved to localStorage', 'success');
+                } else {
+                    log('❌ Login failed: ' + data.error, 'error');
+                }
+            } catch (error) {
+                log('❌ Login request failed: ' + error.message, 'error');
+            }
+            updateState();
+        };
+
+        const testDashboardAccess = async () => {
+            log('Testing dashboard access...');
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                log('❌ No token found. Please login first.', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/auth/verify', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    log('✅ Token is valid. Dashboard should be accessible.', 'success');
+                    log('You can now navigate to /dashboard/trainer', 'info');
+                } else {
+                    log('❌ Token verification failed', 'error');
+                }
+            } catch (error) {
+                log('❌ Verification request failed: ' + error.message, 'error');
+            }
+            updateState();
+        };
+
+        const doFullLogin = async (role) => {
+            log(`Starting full login flow for ${role}...`);
+            
+            const credentials = {
+                trainer: {
+                    email: 'test-trainer@fitness.com',
+                    password: '123456'
+                },
+                client: {
+                    email: 'test-client@fitness.com',
+                    password: '123456'
+                }
+            };
+            
+            const creds = credentials[role];
+            
+            try {
+                // Step 1: Login
+                log('Step 1: Sending login request...');
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(creds)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    log('✅ Login successful!', 'success');
+                    
+                    // Step 2: Save data
+                    const token = data.accessToken || data.token;
+                    localStorage.setItem('token', token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    log('✅ Step 2: Data saved to localStorage', 'success');
+                    
+                    // Step 3: Navigate
+                    log('✅ Step 3: Ready to navigate!', 'success');
+                    log('Click below to go to dashboard:', 'info');
+                    
+                    const dashboardUrl = data.user.role === 'TRAINER' 
+                        ? '/dashboard/trainer' 
+                        : '/dashboard/client';
+                    
+                    setTimeout(() => {
+                        if (confirm('Navigate to dashboard now?')) {
+                            window.location.href = dashboardUrl;
+                        }
+                    }, 1000);
+                } else {
+                    log('❌ Login failed: ' + data.error, 'error');
+                }
+            } catch (error) {
+                log('❌ Request failed: ' + error.message, 'error');
+            }
+            updateState();
+        };
+
+        const clearAll = () => {
+            log('Clearing all data...');
+            localStorage.clear();
+            sessionStorage.clear();
+            document.cookie.split(";").forEach(function(c) { 
+                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+            });
+            log('✅ All data cleared', 'success');
+            updateState();
+        };
+
+        // Initialize
+        window.onload = () => {
+            updateState();
+            testAPI();
+            setInterval(updateState, 2000);
+        };
+    </script>
+</body>
+</html>

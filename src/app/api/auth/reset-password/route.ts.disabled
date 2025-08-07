@@ -1,0 +1,51 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { resetPassword, getRequestInfo } from '@/lib/auth';
+import { z } from 'zod';
+
+const resetPasswordSchema = z.object({
+  token: z.string().min(1, 'Token é obrigatório'),
+  password: z.string()
+    .min(8, 'Senha deve ter no mínimo 8 caracteres')
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 
+      'Senha deve conter pelo menos uma letra minúscula, uma maiúscula e um número'),
+});
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { token, password } = resetPasswordSchema.parse(body);
+
+    const { ipAddress, userAgent } = getRequestInfo(request);
+
+    // Reset password
+    const user = await resetPassword(token, password, ipAddress, userAgent);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Senha redefinida com sucesso. Você pode fazer login com a nova senha.',
+    });
+
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({
+        success: false,
+        error: 'Dados inválidos',
+        details: error.errors,
+      }, { status: 400 });
+    }
+
+    if (error.message.includes('Invalid or expired')) {
+      return NextResponse.json({
+        success: false,
+        error: 'Token inválido ou expirado. Solicite uma nova redefinição de senha.',
+      }, { status: 400 });
+    }
+
+    console.error('Reset password error:', error);
+    
+    return NextResponse.json({
+      success: false,
+      error: 'Erro interno do servidor. Tente novamente mais tarde.',
+    }, { status: 500 });
+  }
+}

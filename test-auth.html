@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Auth</title>
+</head>
+<body>
+    <h1>Teste de Autenticação</h1>
+    
+    <div>
+        <h2>Registrar</h2>
+        <button onclick="register()">Registrar Novo Usuário</button>
+    </div>
+    
+    <div>
+        <h2>Login</h2>
+        <button onclick="login()">Fazer Login</button>
+    </div>
+    
+    <div>
+        <h2>Resultado:</h2>
+        <pre id="result"></pre>
+    </div>
+
+    <script>
+        const baseUrl = 'http://localhost:3001';
+        
+        async function register() {
+            const data = {
+                name: "Maria Santos",
+                email: "maria@test.com",
+                password: "123456",
+                role: "TRAINER",
+                phone: "11888888888"
+            };
+            
+            try {
+                const response = await fetch(`${baseUrl}/api/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                document.getElementById('result').textContent = JSON.stringify(result, null, 2);
+                
+                if (result.success) {
+                    alert('Registro bem-sucedido! Agora faça login.');
+                }
+            } catch (error) {
+                document.getElementById('result').textContent = 'Erro: ' + error.message;
+            }
+        }
+        
+        async function login() {
+            const data = {
+                email: "maria@test.com",
+                password: "123456"
+            };
+            
+            try {
+                const response = await fetch(`${baseUrl}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include', // Important for cookies
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                document.getElementById('result').textContent = JSON.stringify(result, null, 2);
+                
+                if (result.success) {
+                    localStorage.setItem('user', JSON.stringify(result.user));
+                    localStorage.setItem('token', result.token);
+                    
+                    alert('Login bem-sucedido! Redirecionando...');
+                    
+                    // Redirect based on role
+                    if (result.user.role === 'TRAINER') {
+                        window.location.href = `${baseUrl}/dashboard/trainer`;
+                    } else {
+                        window.location.href = `${baseUrl}/dashboard/client`;
+                    }
+                }
+            } catch (error) {
+                document.getElementById('result').textContent = 'Erro: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

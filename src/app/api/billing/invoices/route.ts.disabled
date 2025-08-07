@@ -1,0 +1,168 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { verifyAuth } from '@/lib/auth'
+import { formatAmountForDisplay } from '@/lib/stripe'
+
+export async function GET(request: NextRequest) {
+  try {
+    const user = await verifyAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = Math.min(parseInt(searchParams.get('limit') || '10'), 50)
+    const status = searchParams.get('status')
+    const skip = (page - 1) * limit
+
+    const whereClause: any = {
+      userId: user.id
+    }
+
+    if (status && ['draft', 'sent', 'paid', 'overdue', 'canceled'].includes(status)) {
+      whereClause.status = status
+    }
+
+    // Get user's invoices
+    const invoices = await prisma.invoice.findMany({
+      where: whereClause,
+      include: {
+        payments: {
+          select: {
+            id: true,
+            amount: true,
+            status: true,
+            createdAt: true,
+            method: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit
+    })
+
+    const total = await prisma.invoice.count({
+      where: whereClause
+    })
+
+    return NextResponse.json({
+      success: true,
+      invoices: invoices.map(invoice => ({
+        id: invoice.id,
+        invoiceNumber: invoice.invoiceNumber,
+        amount: invoice.amount,
+        currency: invoice.currency,
+        tax: invoice.tax,
+        discount: invoice.discount,
+        total: invoice.total,
+        status: invoice.status,
+        dueDate: invoice.dueDate,
+        paidAt: invoice.paidAt,
+        createdAt: invoice.createdAt,
+        invoiceUrl: invoice.invoiceUrl,
+        lineItems: invoice.lineItems,
+        payments: invoice.payments.map(payment => ({
+          id: payment.id,
+          amount: payment.amount,
+          status: payment.status,
+          method: payment.method,
+          paidAt: payment.createdAt
+        }))
+      })),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      },
+      summary: {
+        totalAmount: invoices.reduce((sum, inv) => sum + inv.total, 0),
+        paidAmount: invoices
+          .filter(inv => inv.status === 'paid')
+          .reduce((sum, inv) => sum + inv.total, 0),
+        pendingAmount: invoices
+          .filter(inv => ['sent', 'overdue'].includes(inv.status))
+          .reduce((sum, inv) => sum + inv.total, 0)
+      }
+    })
+
+  } catch (error) {
+    console.error('Get invoices error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
+// Generate invoice for user
+export async function POST(request: NextRequest) {
+  try {
+    const user = await verifyAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const { lineItems, dueDate, description } = body
+
+    if (!Array.isArray(lineItems) || lineItems.length === 0) {
+      return NextResponse.json(
+        { error: 'Line items are required' },
+        { status: 400 }
+      )
+    }
+
+    // Calculate totals
+    const subtotal = lineItems.reduce((sum: number, item: any) => sum + (item.quantity * item.price), 0)
+    const tax = 0 // Implement tax calculation if needed
+    const discount = 0 // Could be applied from vouchers
+    const total = subtotal + tax - discount
+
+    // Generate invoice number
+    const invoiceCount = await prisma.invoice.count()
+    const invoiceNumber = `INV-${String(invoiceCount + 1).padStart(6, '0')}`
+
+    const invoice = await prisma.invoice.create({
+      data: {
+        userId: user.id,
+        invoiceNumber,
+        amount: subtotal,
+        tax,
+        discount,
+        total,
+        status: 'draft',
+        dueDate: new Date(dueDate),
+        lineItems: lineItems,
+        metadata: {
+          description: description || 'Invoice for fitness services',
+          generatedAt: new Date().toISOString()
+        }
+      }
+    })
+
+    return NextResponse.json({
+      success: true,
+      invoice: {
+        id: invoice.id,
+        invoiceNumber: invoice.invoiceNumber,
+        amount: invoice.amount,
+        currency: invoice.currency,
+        total: invoice.total,
+        status: invoice.status,
+        dueDate: invoice.dueDate,
+        createdAt: invoice.createdAt,
+        lineItems: invoice.lineItems
+      }
+    })
+
+  } catch (error) {
+    console.error('Create invoice error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}

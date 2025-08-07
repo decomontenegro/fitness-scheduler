@@ -1,0 +1,43 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { StripeService } from '@/services/stripe'
+import { headers } from 'next/headers'
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.text()
+    const headersList = headers()
+    const signature = headersList.get('stripe-signature')
+
+    if (!signature) {
+      console.error('Missing Stripe signature')
+      return NextResponse.json({ error: 'Missing signature' }, { status: 400 })
+    }
+
+    // Construct and verify the webhook event
+    const event = await StripeService.constructEvent(body, signature)
+    
+    console.log(`Processing webhook event: ${event.type}`)
+
+    // Handle the event
+    await StripeService.handleWebhookEvent(event)
+
+    return NextResponse.json({ received: true })
+
+  } catch (error) {
+    console.error('Webhook error:', error)
+    
+    if (error instanceof Error) {
+      if (error.message.includes('Invalid signature')) {
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
+      }
+    }
+
+    return NextResponse.json(
+      { error: 'Webhook handler failed' },
+      { status: 500 }
+    )
+  }
+}
+
+// Disable body parsing for webhooks
+export const dynamic = 'force-dynamic'

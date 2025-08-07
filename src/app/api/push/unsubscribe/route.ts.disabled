@@ -1,0 +1,54 @@
+import { NextRequest, NextResponse } from 'next/server';
+import jwt from 'jsonwebtoken';
+import { pushNotificationService } from '@/services/push';
+
+export async function POST(request: NextRequest) {
+  try {
+    // Get token from Authorization header
+    const authHeader = request.headers.get('authorization');
+    const token = authHeader?.replace('Bearer ', '') || request.cookies.get('auth-token')?.value;
+    
+    if (!token) {
+      return NextResponse.json({ error: 'Token não fornecido' }, { status: 401 });
+    }
+
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
+
+    const body = await request.json();
+    const { endpoint } = body;
+
+    if (!endpoint) {
+      return NextResponse.json(
+        { error: 'Endpoint é obrigatório' },
+        { status: 400 }
+      );
+    }
+
+    // Remove subscription
+    const success = await pushNotificationService.removeSubscription(endpoint);
+
+    if (success) {
+      return NextResponse.json({ 
+        message: 'Inscrição removida com sucesso' 
+      });
+    } else {
+      return NextResponse.json(
+        { error: 'Erro ao remover inscrição' },
+        { status: 500 }
+      );
+    }
+
+  } catch (error: any) {
+    console.error('Error unsubscribing from push notifications:', error);
+    
+    if (error.name === 'JsonWebTokenError') {
+      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
+    }
+    
+    return NextResponse.json(
+      { error: 'Erro interno do servidor' },
+      { status: 500 }
+    );
+  }
+}

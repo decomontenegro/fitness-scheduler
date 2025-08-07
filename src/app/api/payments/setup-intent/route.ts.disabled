@@ -1,0 +1,64 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { StripeService } from '@/services/stripe'
+import { verifyAuth } from '@/lib/auth'
+
+export async function POST(request: NextRequest) {
+  try {
+    const user = await verifyAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const setupIntent = await StripeService.createSetupIntent(user.id)
+
+    return NextResponse.json({
+      success: true,
+      setupIntent: {
+        id: setupIntent.id,
+        clientSecret: setupIntent.client_secret,
+        status: setupIntent.status
+      }
+    })
+
+  } catch (error) {
+    console.error('Setup intent error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
+// Delete payment method
+export async function DELETE(request: NextRequest) {
+  try {
+    const user = await verifyAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const paymentMethodId = searchParams.get('payment_method_id')
+
+    if (!paymentMethodId) {
+      return NextResponse.json(
+        { error: 'payment_method_id is required' },
+        { status: 400 }
+      )
+    }
+
+    await StripeService.detachPaymentMethod(paymentMethodId)
+
+    return NextResponse.json({
+      success: true,
+      message: 'Payment method removed successfully'
+    })
+
+  } catch (error) {
+    console.error('Remove payment method error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}

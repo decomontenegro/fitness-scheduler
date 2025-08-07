@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Auth Issue</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #00ff00;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #00ff00;
+            border-radius: 5px;
+        }
+        button {
+            background: #00ff00;
+            color: #000;
+            padding: 10px 20px;
+            border: none;
+            margin: 5px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        button:hover {
+            background: #00cc00;
+        }
+        pre {
+            background: #000;
+            padding: 10px;
+            overflow-x: auto;
+            border: 1px solid #00ff00;
+        }
+        .success { color: #00ff00; }
+        .error { color: #ff0000; }
+        .warning { color: #ffff00; }
+        .info { color: #00ffff; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug Authentication Issue</h1>
+    
+    <div class="section">
+        <h2>Step 1: Clear Everything</h2>
+        <button onclick="clearAll()">Clear All Storage & Cookies</button>
+        <div id="clearResult"></div>
+    </div>
+    
+    <div class="section">
+        <h2>Step 2: Test Login</h2>
+        <button onclick="testLogin('test-client@fitness.com', 'password123')">Login as Client</button>
+        <button onclick="testLogin('test-trainer@fitness.com', 'password123')">Login as Trainer</button>
+        <div id="loginResult"></div>
+    </div>
+    
+    <div class="section">
+        <h2>Step 3: Check Auth State</h2>
+        <button onclick="checkAuthState()">Check Current Auth State</button>
+        <div id="authState"></div>
+    </div>
+    
+    <div class="section">
+        <h2>Step 4: Test Dashboard Access</h2>
+        <button onclick="testDashboardAccess()">Test Dashboard API</button>
+        <div id="dashboardResult"></div>
+    </div>
+    
+    <div class="section">
+        <h2>Step 5: Navigate to Dashboard</h2>
+        <button onclick="navigateDashboard()">Navigate Based on Role</button>
+        <div id="navResult"></div>
+    </div>
+    
+    <div class="section">
+        <h2>Real-time Logs</h2>
+        <pre id="logs"></pre>
+    </div>
+
+    <script>
+        const baseUrl = window.location.origin;
+        const logs = [];
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toISOString();
+            const logEntry = `[${timestamp}] [${type.toUpperCase()}] ${message}`;
+            logs.push(logEntry);
+            document.getElementById('logs').textContent = logs.join('\n');
+            console.log(logEntry);
+        }
+        
+        function clearAll() {
+            log('Clearing all storage and cookies...', 'info');
+            
+            // Clear localStorage
+            localStorage.clear();
+            log('LocalStorage cleared', 'success');
+            
+            // Clear sessionStorage
+            sessionStorage.clear();
+            log('SessionStorage cleared', 'success');
+            
+            // Clear cookies
+            document.cookie.split(";").forEach(function(c) { 
+                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+            });
+            log('Cookies cleared', 'success');
+            
+            document.getElementById('clearResult').innerHTML = '<span class="success">✅ All storage cleared</span>';
+        }
+        
+        async function testLogin(email, password) {
+            log(`Attempting login with ${email}...`, 'info');
+            const resultDiv = document.getElementById('loginResult');
+            
+            try {
+                const response = await fetch(`${baseUrl}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password }),
+                    credentials: 'include'
+                });
+                
+                log(`Login response status: ${response.status}`, 'info');
+                
+                const data = await response.json();
+                log(`Login response data: ${JSON.stringify(data)}`, 'info');
+                
+                if (data.success) {
+                    // Store in localStorage
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    localStorage.setItem('accessToken', data.accessToken);
+                    
+                    log('Auth data stored in localStorage', 'success');
+                    log(`User role: ${data.user.role}`, 'info');
+                    log(`Token: ${data.accessToken?.substring(0, 30)}...`, 'info');
+                    
+                    resultDiv.innerHTML = `
+                        <span class="success">✅ Login successful!</span>
+                        <pre>${JSON.stringify(data.user, null, 2)}</pre>
+                    `;
+                } else {
+                    log(`Login failed: ${data.error}`, 'error');
+                    resultDiv.innerHTML = `<span class="error">❌ Login failed: ${data.error}</span>`;
+                }
+            } catch (error) {
+                log(`Login error: ${error.message}`, 'error');
+                resultDiv.innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+        
+        function checkAuthState() {
+            log('Checking authentication state...', 'info');
+            const resultDiv = document.getElementById('authState');
+            
+            const state = {
+                localStorage: {
+                    user: localStorage.getItem('user'),
+                    accessToken: localStorage.getItem('accessToken')
+                },
+                cookies: document.cookie,
+                sessionStorage: {
+                    keys: Object.keys(sessionStorage)
+                }
+            };
+            
+            log(`LocalStorage has token: ${!!state.localStorage.accessToken}`, 'info');
+            log(`Cookies: ${state.cookies || 'None'}`, 'info');
+            
+            resultDiv.innerHTML = `
+                <span class="info">Current Auth State:</span>
+                <pre>${JSON.stringify(state, null, 2)}</pre>
+            `;
+        }
+        
+        async function testDashboardAccess() {
+            log('Testing dashboard API access...', 'info');
+            const resultDiv = document.getElementById('dashboardResult');
+            
+            const token = localStorage.getItem('accessToken');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const role = user.role?.toLowerCase() || 'client';
+            
+            if (!token) {
+                log('No access token found!', 'error');
+                resultDiv.innerHTML = '<span class="error">❌ No access token found</span>';
+                return;
+            }
+            
+            log(`Testing /api/dashboard/${role} with token`, 'info');
+            
+            try {
+                const response = await fetch(`${baseUrl}/api/dashboard/${role}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    credentials: 'include'
+                });
+                
+                log(`Dashboard API status: ${response.status}`, 'info');
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log('Dashboard API access successful!', 'success');
+                    resultDiv.innerHTML = `
+                        <span class="success">✅ Dashboard accessible!</span>
+                        <pre>${JSON.stringify(data, null, 2).substring(0, 500)}...</pre>
+                    `;
+                } else {
+                    log(`Dashboard API error: ${data.error}`, 'error');
+                    resultDiv.innerHTML = `<span class="error">❌ API Error: ${data.error}</span>`;
+                }
+            } catch (error) {
+                log(`Dashboard test error: ${error.message}`, 'error');
+                resultDiv.innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+        
+        function navigateDashboard() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const role = user.role?.toLowerCase() || 'client';
+            const url = `${baseUrl}/dashboard/${role}`;
+            
+            log(`Navigating to ${url}...`, 'info');
+            document.getElementById('navResult').innerHTML = `
+                <span class="info">Navigating to ${url}...</span>
+            `;
+            
+            setTimeout(() => {
+                window.location.href = url;
+            }, 1000);
+        }
+        
+        // Auto-check on load
+        window.onload = () => {
+            log('Page loaded, checking initial state...', 'info');
+            checkAuthState();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,799 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// SQLite doesn't support enums, using String instead
+
+// User model
+model User {
+  id                String         @id @default(cuid())
+  email             String         @unique
+  name              String
+  password          String
+  phone             String?
+  whatsapp          String?
+  avatar            String?
+  role              String         @default("CLIENT")
+  isActive          Boolean        @default(true)
+  emailVerified     DateTime?
+  
+  // Notification preferences
+  emailNotifications Boolean        @default(true)
+  smsNotifications  Boolean        @default(false)
+  whatsappNotifications Boolean    @default(true)
+  pushNotifications Boolean        @default(true)
+  
+  // 2FA and Security fields
+  twoFactorEnabled  Boolean        @default(false)
+  twoFactorSecret   String?
+  backupCodes       String?        // JSON array of backup codes
+  lastLoginAt       DateTime?
+  loginAttempts     Int            @default(0)
+  lockoutUntil      DateTime?
+  passwordResetToken String?
+  passwordResetExpiry DateTime?
+  
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  // Stripe customer fields
+  stripeCustomerId  String?        @unique
+  
+  // Relations
+  trainerProfile    TrainerProfile?
+  clientProfile     ClientProfile?
+  sentMessages      Message[]      @relation("SentMessages")
+  receivedMessages  Message[]      @relation("ReceivedMessages")
+  notifications     Notification[]
+  authTokens        AuthToken[]
+  auditLogs         AuditLog[]
+  pushSubscriptions PushSubscription[]
+  payments          Payment[]
+  subscriptions     Subscription[]
+  packages          Package[]
+  walletTransactions WalletTransaction[]
+  vouchers          Voucher[]
+  referralsMade     Referral[]     @relation("ReferralsMade")
+  referralsReceived Referral[]     @relation("ReferralsReceived")
+  invoices          Invoice[]
+}
+
+// Trainer specific profile
+model TrainerProfile {
+  id                String         @id @default(cuid())
+  userId            String         @unique
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio               String?
+  specialties       String?
+  experience        Int?           // Years of experience
+  hourlyRate        Float?
+  rating            Float          @default(0)
+  totalReviews      Int            @default(0)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  // Relations
+  appointments      Appointment[]  @relation("TrainerAppointments")
+  services          Service[]
+  availability      Availability[]
+  reviews           Review[]
+  clients           ClientProfile[] @relation("TrainerClients")
+  packages          Package[]
+}
+
+// Client specific profile
+model ClientProfile {
+  id                String         @id @default(cuid())
+  userId            String         @unique
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goals             String?
+  medicalHistory    String?
+  emergencyContact  String?
+  birthDate         DateTime?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  // Relations
+  appointments      Appointment[]  @relation("ClientAppointments")
+  reviews           Review[]
+  trainers          TrainerProfile[] @relation("TrainerClients")
+  progress          ClientProgress[]
+}
+
+// Service types offered by trainers
+model Service {
+  id                String         @id @default(cuid())
+  trainerId         String
+  trainer           TrainerProfile @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+  name              String
+  description       String?
+  duration          Int            // Duration in minutes
+  price             Float
+  isActive          Boolean        @default(true)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  // Relations
+  appointments      Appointment[]
+}
+
+// Trainer availability
+model Availability {
+  id                String         @id @default(cuid())
+  trainerId         String
+  trainer           TrainerProfile @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+  dayOfWeek         String
+  startTime         String         // Format: "HH:MM"
+  endTime           String         // Format: "HH:MM"
+  isActive          Boolean        @default(true)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@unique([trainerId, dayOfWeek, startTime])
+}
+
+// Appointment model
+model Appointment {
+  id                String            @id @default(cuid())
+  trainerId         String
+  trainer           TrainerProfile    @relation("TrainerAppointments", fields: [trainerId], references: [id])
+  clientId          String
+  client            ClientProfile     @relation("ClientAppointments", fields: [clientId], references: [id])
+  serviceId         String?
+  service           Service?          @relation(fields: [serviceId], references: [id])
+  date              DateTime
+  startTime         DateTime
+  endTime           DateTime
+  status            String            @default("PENDING")
+  notes             String?
+  price             Float
+  isPaid            Boolean           @default(false)
+  cancelReason      String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  // Relations
+  payment           Payment?
+  review            Review?
+  packageSession    PackageSession?
+}
+
+// Enhanced Payment model
+model Payment {
+  id                String         @id @default(cuid())
+  appointmentId     String?        @unique
+  appointment       Appointment?   @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  subscriptionId    String?
+  subscription      Subscription?  @relation(fields: [subscriptionId], references: [id])
+  packageId         String?
+  package           Package?       @relation(fields: [packageId], references: [id])
+  userId            String
+  user              User           @relation(fields: [userId], references: [id])
+  
+  // Stripe fields
+  stripePaymentIntentId String?    @unique
+  stripeCustomerId      String?
+  stripePaymentMethodId String?
+  
+  amount            Float
+  currency          String         @default("BRL")
+  method            String         // credit_card, debit_card, pix, wallet, cash
+  status            String         // pending, processing, succeeded, requires_action, canceled, failed, refunded
+  transactionId     String?
+  
+  // Split payment fields
+  trainerAmount     Float?         // 80% to trainer
+  platformAmount    Float?         // 20% to platform
+  processingFee     Float?         // Stripe fee
+  
+  // Receipt and billing
+  receiptUrl        String?
+  invoiceId         String?
+  
+  // Metadata
+  description       String?
+  failureReason     String?
+  refundReason      String?
+  metadata          Json?
+  
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  
+  // Relations
+  refunds           Refund[]
+  invoice           Invoice?       @relation(fields: [invoiceId], references: [id])
+}
+
+// Review model
+model Review {
+  id                String         @id @default(cuid())
+  appointmentId     String         @unique
+  appointment       Appointment    @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  trainerId         String
+  trainer           TrainerProfile @relation(fields: [trainerId], references: [id])
+  clientId          String
+  client            ClientProfile  @relation(fields: [clientId], references: [id])
+  rating            Int            // 1-5 stars
+  comment           String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+}
+
+// Message model for chat
+model Message {
+  id                String         @id @default(cuid())
+  senderId          String
+  sender            User           @relation("SentMessages", fields: [senderId], references: [id])
+  receiverId        String
+  receiver          User           @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  content           String
+  isRead            Boolean        @default(false)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+}
+
+// Notification model
+model Notification {
+  id                String         @id @default(cuid())
+  userId            String
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title             String
+  message           String
+  type              String         // appointment, message, payment, reminder
+  isRead            Boolean        @default(false)
+  metadata          Json?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+}
+
+// Auth Token model for refresh tokens and session management
+model AuthToken {
+  id                String         @id @default(cuid())
+  userId            String
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token             String         @unique
+  type              String         // refresh, access, reset
+  expiresAt         DateTime
+  isRevoked         Boolean        @default(false)
+  deviceInfo        String?        // User agent, IP, etc.
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+}
+
+// Audit Log model for security events
+model AuditLog {
+  id                String         @id @default(cuid())
+  userId            String?
+  user              User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action            String         // login, logout, password_change, 2fa_setup, etc.
+  entityType        String?        // user, appointment, etc.
+  entityId          String?
+  oldValues         Json?
+  newValues         Json?
+  ipAddress         String?
+  userAgent         String?
+  success           Boolean        @default(true)
+  errorMessage      String?
+  createdAt         DateTime       @default(now())
+}
+
+// Push Subscription model for browser notifications
+model PushSubscription {
+  id                String         @id @default(cuid())
+  userId            String
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint          String         @unique
+  p256dh            String
+  auth              String
+  userAgent         String?
+  isActive          Boolean        @default(true)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+}
+
+// Notification Template model for reusable templates
+model NotificationTemplate {
+  id                String         @id @default(cuid())
+  name              String         @unique
+  type              String         // email, sms, whatsapp, push
+  subject           String?        // For email/push title
+  body              String         // Template body with placeholders
+  variables         Json?          // Array of available variables
+  isActive          Boolean        @default(true)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  
+  // Relations
+  notificationLogs  NotificationLog[]
+}
+
+// Notification Log model for tracking sent notifications
+model NotificationLog {
+  id                String         @id @default(cuid())
+  userId            String?
+  templateId        String?
+  template          NotificationTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  type              String         // email, sms, whatsapp, push
+  recipient         String         // Email, phone number, or push endpoint
+  subject           String?
+  message           String
+  status            String         // pending, sent, failed, delivered
+  errorMessage      String?
+  externalId        String?        // External service message ID
+  metadata          Json?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+}
+
+// Subscription Plans model
+model SubscriptionPlan {
+  id                String         @id @default(cuid())
+  name              String         @unique // Basic, Pro, Premium
+  description       String?
+  price             Float          // Monthly price in BRL
+  currency          String         @default("BRL")
+  interval          String         @default("month") // month, year
+  intervalCount     Int            @default(1)
+  trialDays         Int            @default(7)
+  
+  // Stripe fields
+  stripePriceId     String?        @unique
+  stripeProductId   String?        @unique
+  
+  // Features
+  maxClients        Int?           // null = unlimited
+  maxServices       Int?           // null = unlimited
+  hasAnalytics      Boolean        @default(false)
+  hasCustomBranding Boolean        @default(false)
+  hasAdvancedScheduling Boolean    @default(false)
+  hasPrioritySupport Boolean       @default(false)
+  
+  isActive          Boolean        @default(true)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  
+  // Relations
+  subscriptions     Subscription[]
+}
+
+// User Subscriptions model
+model Subscription {
+  id                String         @id @default(cuid())
+  userId            String
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId            String
+  plan              SubscriptionPlan @relation(fields: [planId], references: [id])
+  
+  // Stripe fields
+  stripeSubscriptionId String?     @unique
+  stripeCustomerId     String?
+  
+  status            String         // active, trialing, past_due, canceled, unpaid, incomplete
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  trialStart        DateTime?
+  trialEnd          DateTime?
+  cancelAt          DateTime?
+  canceledAt        DateTime?
+  endedAt           DateTime?
+  
+  // Billing
+  quantity          Int            @default(1)
+  
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  
+  // Relations
+  payments          Payment[]
+  
+  @@unique([userId, planId])
+}
+
+// Session Packages model (5, 10, 20 sessions)
+model Package {
+  id                String         @id @default(cuid())
+  name              String         // "5 Sessions", "10 Sessions", "20 Sessions"
+  description       String?
+  sessions          Int            // Number of sessions
+  price             Float          // Package price
+  currency          String         @default("BRL")
+  discount          Float          @default(0) // Percentage discount
+  validityDays      Int            @default(90) // Days until expiration
+  
+  // Trainer specific
+  trainerId         String?
+  trainer           TrainerProfile? @relation(fields: [trainerId], references: [id])
+  
+  // User who purchased the package
+  userId            String?
+  user              User?          @relation(fields: [userId], references: [id])
+  
+  isActive          Boolean        @default(true)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  
+  // Relations
+  payments          Payment[]
+  packageSessions   PackageSession[]
+}
+
+// Package Sessions tracking
+model PackageSession {
+  id                String         @id @default(cuid())
+  packageId         String
+  package           Package        @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  appointmentId     String?        @unique
+  appointment       Appointment?   @relation(fields: [appointmentId], references: [id])
+  userId            String
+  
+  isUsed            Boolean        @default(false)
+  usedAt            DateTime?
+  expiresAt         DateTime
+  
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+}
+
+// Refund model
+model Refund {
+  id                String         @id @default(cuid())
+  paymentId         String
+  payment           Payment        @relation(fields: [paymentId], references: [id])
+  
+  // Stripe fields
+  stripeRefundId    String?        @unique
+  
+  amount            Float
+  currency          String         @default("BRL")
+  reason            String?        // duplicate, fraudulent, requested_by_customer
+  status            String         // pending, succeeded, failed, canceled
+  failureReason     String?
+  
+  metadata          Json?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+}
+
+// Wallet System
+model WalletTransaction {
+  id                String         @id @default(cuid())
+  userId            String
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type              String         // credit, debit, refund, cashback, referral_bonus
+  amount            Float
+  currency          String         @default("BRL")
+  description       String
+  
+  // Reference to related entities
+  appointmentId     String?
+  paymentId         String?
+  referralId        String?
+  
+  metadata          Json?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+}
+
+// Voucher/Coupon system
+model Voucher {
+  id                String         @id @default(cuid())
+  code              String         @unique
+  name              String
+  description       String?
+  
+  type              String         // percentage, fixed_amount
+  amount            Float          // Percentage (0-100) or fixed amount
+  currency          String         @default("BRL")
+  
+  // Usage limits
+  maxUses           Int?           // null = unlimited
+  usedCount         Int            @default(0)
+  maxUsesPerUser    Int            @default(1)
+  
+  // Validity
+  validFrom         DateTime
+  validUntil        DateTime
+  
+  // Restrictions
+  minAmount         Float?         // Minimum order amount
+  applicableTo      String         // all, subscriptions, sessions, packages
+  
+  isActive          Boolean        @default(true)
+  createdBy         String?        // Admin user ID
+  
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  
+  // Relations
+  userId            String?        // If voucher is user-specific
+  user              User?          @relation(fields: [userId], references: [id])
+  voucherUsages     VoucherUsage[]
+}
+
+// Voucher Usage tracking
+model VoucherUsage {
+  id                String         @id @default(cuid())
+  voucherId         String
+  voucher           Voucher        @relation(fields: [voucherId], references: [id])
+  userId            String
+  paymentId         String?
+  
+  discountAmount    Float
+  currency          String         @default("BRL")
+  
+  usedAt            DateTime       @default(now())
+  
+  @@unique([voucherId, userId, paymentId])
+}
+
+// Referral Program
+model Referral {
+  id                String         @id @default(cuid())
+  referrerId        String
+  referrer          User           @relation("ReferralsMade", fields: [referrerId], references: [id])
+  referredId        String
+  referred          User           @relation("ReferralsReceived", fields: [referredId], references: [id])
+  
+  status            String         // pending, completed, expired
+  rewardAmount      Float          @default(50.0) // BRL
+  currency          String         @default("BRL")
+  
+  // Tracking
+  completedAt       DateTime?      // When referred user made first purchase
+  expiresAt         DateTime       // Expiration date
+  
+  metadata          Json?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  
+  @@unique([referrerId, referredId])
+}
+
+// Invoice model
+model Invoice {
+  id                String         @id @default(cuid())
+  userId            String
+  user              User           @relation(fields: [userId], references: [id])
+  
+  // Invoice details
+  invoiceNumber     String         @unique
+  amount            Float
+  currency          String         @default("BRL")
+  tax               Float          @default(0)
+  discount          Float          @default(0)
+  total             Float
+  
+  // Status
+  status            String         // draft, sent, paid, overdue, canceled
+  dueDate           DateTime
+  paidAt            DateTime?
+  
+  // PDF and URLs
+  invoiceUrl        String?
+  pdfPath           String?
+  
+  // Line items as JSON
+  lineItems         Json           // Array of {description, quantity, price, amount}
+  
+  metadata          Json?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  
+  // Relations
+  payments          Payment[]
+}
+
+// Payment Methods (saved cards)
+model PaymentMethod {
+  id                String         @id @default(cuid())
+  userId            String
+  
+  // Stripe fields
+  stripePaymentMethodId String     @unique
+  stripeCustomerId      String?
+  
+  type              String         // card, pix, bank_account
+  card              Json?          // {brand, last4, expMonth, expYear, funding}
+  
+  isDefault         Boolean        @default(false)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  
+  @@index([userId])
+}
+
+// Analytics Models
+model AnalyticsMetric {
+  id                String         @id @default(cuid())
+  userId            String?        // null for platform-wide metrics
+  trainerId         String?        // for trainer-specific metrics
+  clientId          String?        // for client-specific metrics
+  
+  metricType        String         // revenue, occupancy, clients, sessions, etc.
+  category          String         // trainer, client, platform
+  value             Float
+  unit              String?        // percentage, count, currency
+  
+  // Time dimensions
+  date              DateTime       // The date this metric represents
+  period            String         // daily, weekly, monthly, yearly
+  
+  // Contextual data
+  metadata          Json?          // Additional context like service type, location, etc.
+  
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  
+  @@index([userId, metricType, date])
+  @@index([trainerId, metricType, date])
+  @@index([clientId, metricType, date])
+  @@index([date, period])
+}
+
+// Performance tracking for clients
+model ClientProgress {
+  id                String         @id @default(cuid())
+  clientId          String
+  client            ClientProfile  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  
+  // Measurements
+  weight            Float?
+  bodyFat           Float?
+  muscleMass        Float?
+  measurements      Json?          // { chest: 100, waist: 80, etc. }
+  
+  // Goals tracking
+  currentGoals      Json?          // Array of current goals
+  achievedGoals     Json?          // Array of achieved goals
+  
+  // Progress notes
+  notes             String?
+  photos            Json?          // Array of progress photo URLs
+  
+  recordDate        DateTime
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  
+  @@index([clientId, recordDate])
+}
+
+// Business intelligence and insights
+model BusinessInsight {
+  id                String         @id @default(cuid())
+  userId            String?        // null for platform-wide insights
+  
+  type              String         // churn_prediction, revenue_forecast, optimization, trend
+  category          String         // revenue, clients, occupancy, performance
+  title             String
+  description       String
+  
+  // Insight data
+  currentValue      Float?
+  predictedValue    Float?
+  confidence        Float?         // 0-1 confidence score
+  timeframe         String?        // next_month, next_quarter, etc.
+  
+  // Recommendations
+  recommendations   Json?          // Array of actionable recommendations
+  priority          String         @default("medium") // low, medium, high, critical
+  
+  // Validity
+  validFrom         DateTime
+  validUntil        DateTime?
+  isActive          Boolean        @default(true)
+  
+  metadata          Json?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  
+  @@index([userId, type, validFrom])
+  @@index([category, priority])
+}
+
+// A/B Testing framework
+model ABTest {
+  id                String         @id @default(cuid())
+  name              String
+  description       String?
+  
+  // Test configuration
+  variants          Json           // Array of test variants
+  trafficSplit      Json           // Traffic allocation per variant
+  
+  // Targeting
+  targetAudience    Json?          // Rules for who sees this test
+  
+  // Status and dates
+  status            String         @default("draft") // draft, running, paused, completed
+  startDate         DateTime?
+  endDate           DateTime?
+  
+  // Results
+  results           Json?          // Test results and metrics
+  winner            String?        // Winning variant
+  
+  createdBy         String         // Admin user ID
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  
+  // Relations
+  testParticipants  ABTestParticipant[]
+}
+
+// A/B Test participation tracking
+model ABTestParticipant {
+  id                String         @id @default(cuid())
+  testId            String
+  test              ABTest         @relation(fields: [testId], references: [id], onDelete: Cascade)
+  userId            String
+  
+  variant           String         // Which variant they saw
+  convertedAt       DateTime?      // When they converted (if applicable)
+  metadata          Json?
+  
+  createdAt         DateTime       @default(now())
+  
+  @@unique([testId, userId])
+}
+
+// Report templates and configurations
+model ReportTemplate {
+  id                String         @id @default(cuid())
+  name              String
+  description       String?
+  type              String         // financial, clients, occupancy, performance
+  
+  // Template configuration
+  metrics           Json           // Array of metrics to include
+  filters           Json?          // Default filters
+  grouping          Json?          // How to group data
+  visualizations    Json?          // Chart configurations
+  
+  // Access control
+  visibility        String         @default("private") // private, public, admin_only
+  createdBy         String         // User ID who created it
+  
+  // Status
+  isActive          Boolean        @default(true)
+  
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  
+  // Relations
+  scheduledReports  ScheduledReport[]
+}
+
+// Scheduled report generation
+model ScheduledReport {
+  id                String         @id @default(cuid())
+  templateId        String
+  template          ReportTemplate @relation(fields: [templateId], references: [id])
+  userId            String         // Who will receive the report
+  
+  // Schedule configuration
+  frequency         String         // daily, weekly, monthly, quarterly
+  dayOfWeek         Int?           // 0-6 for weekly reports
+  dayOfMonth        Int?           // 1-31 for monthly reports
+  time              String         // HH:MM format
+  
+  // Delivery options
+  deliveryMethods   Json           // Array: ["email", "download", "dashboard"]
+  recipients        Json?          // Additional email recipients
+  
+  // Status
+  isActive          Boolean        @default(true)
+  lastGenerated     DateTime?
+  nextGeneration    DateTime?
+  
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+}

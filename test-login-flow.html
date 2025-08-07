@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Login Flow</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background: #10b981;
+            color: white;
+        }
+        .error {
+            background: #ef4444;
+            color: white;
+        }
+        .info {
+            background: #f3f4f6;
+            color: #111827;
+        }
+        pre {
+            background: #f9fafb;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Login Flow</h1>
+    
+    <div>
+        <h2>1. Test Login API</h2>
+        <button onclick="testLogin()">Test Login</button>
+        <div id="loginResult"></div>
+    </div>
+    
+    <div>
+        <h2>2. Check Cookies</h2>
+        <button onclick="checkCookies()">Check Cookies</button>
+        <div id="cookieResult"></div>
+    </div>
+    
+    <div>
+        <h2>3. Navigate to Dashboard</h2>
+        <button onclick="navigateToDashboard('client')">Go to Client Dashboard</button>
+        <button onclick="navigateToDashboard('trainer')">Go to Trainer Dashboard</button>
+        <div id="navResult"></div>
+    </div>
+    
+    <div>
+        <h2>4. Full Login Flow</h2>
+        <button onclick="fullLoginFlow()">Complete Login Flow</button>
+        <div id="flowResult"></div>
+    </div>
+
+    <script>
+        const baseUrl = 'http://localhost:3001';
+        
+        async function testLogin() {
+            const resultDiv = document.getElementById('loginResult');
+            resultDiv.innerHTML = '<div class="status info">Testing login...</div>';
+            
+            try {
+                const response = await fetch(`${baseUrl}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'test-client@fitness.com',
+                        password: 'password123'
+                    }),
+                    credentials: 'include' // Important for cookies
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="status success">✅ Login successful!</div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                    
+                    // Store in localStorage
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    localStorage.setItem('accessToken', data.accessToken);
+                    
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="status error">❌ Login failed</div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="status error">❌ Error: ${error.message}</div>
+                `;
+            }
+        }
+        
+        function checkCookies() {
+            const resultDiv = document.getElementById('cookieResult');
+            const cookies = document.cookie;
+            const localStorage = {
+                user: window.localStorage.getItem('user'),
+                accessToken: window.localStorage.getItem('accessToken')
+            };
+            
+            resultDiv.innerHTML = `
+                <div class="status info">Current Storage:</div>
+                <h3>Cookies:</h3>
+                <pre>${cookies || 'No cookies found'}</pre>
+                <h3>LocalStorage:</h3>
+                <pre>${JSON.stringify(localStorage, null, 2)}</pre>
+            `;
+        }
+        
+        function navigateToDashboard(role) {
+            const resultDiv = document.getElementById('navResult');
+            const url = `${baseUrl}/dashboard/${role}`;
+            
+            resultDiv.innerHTML = `
+                <div class="status info">Navigating to ${url}...</div>
+            `;
+            
+            // Simulate navigation
+            window.location.href = url;
+        }
+        
+        async function fullLoginFlow() {
+            const resultDiv = document.getElementById('flowResult');
+            resultDiv.innerHTML = '<div class="status info">Starting full login flow...</div>';
+            
+            try {
+                // Step 1: Login
+                resultDiv.innerHTML += '<div class="status info">Step 1: Logging in...</div>';
+                const loginResponse = await fetch(`${baseUrl}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'test-client@fitness.com',
+                        password: 'password123'
+                    }),
+                    credentials: 'include'
+                });
+                
+                const loginData = await loginResponse.json();
+                
+                if (!loginData.success) {
+                    throw new Error('Login failed: ' + loginData.error);
+                }
+                
+                resultDiv.innerHTML += '<div class="status success">✅ Step 1: Login successful</div>';
+                
+                // Step 2: Store data
+                resultDiv.innerHTML += '<div class="status info">Step 2: Storing auth data...</div>';
+                localStorage.setItem('user', JSON.stringify(loginData.user));
+                localStorage.setItem('accessToken', loginData.accessToken);
+                resultDiv.innerHTML += '<div class="status success">✅ Step 2: Data stored</div>';
+                
+                // Step 3: Wait a moment
+                resultDiv.innerHTML += '<div class="status info">Step 3: Waiting for cookies to set...</div>';
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                resultDiv.innerHTML += '<div class="status success">✅ Step 3: Ready</div>';
+                
+                // Step 4: Navigate
+                resultDiv.innerHTML += '<div class="status info">Step 4: Navigating to dashboard...</div>';
+                const dashboardUrl = loginData.user.role === 'TRAINER' 
+                    ? '/dashboard/trainer' 
+                    : '/dashboard/client';
+                
+                window.location.href = baseUrl + dashboardUrl;
+                
+            } catch (error) {
+                resultDiv.innerHTML += `<div class="status error">❌ Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

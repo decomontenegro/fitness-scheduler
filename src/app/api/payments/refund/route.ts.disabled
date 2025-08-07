@@ -1,0 +1,211 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { StripeService } from '@/services/stripe'
+import { prisma } from '@/lib/prisma'
+import { verifyAuth } from '@/lib/auth'
+import { z } from 'zod'
+
+const refundSchema = z.object({
+  paymentId: z.string(),
+  amount: z.number().positive().optional(),
+  reason: z.enum(['duplicate', 'fraudulent', 'requested_by_customer']).default('requested_by_customer'),
+  description: z.string().optional()
+})
+
+export async function POST(request: NextRequest) {
+  try {
+    const user = await verifyAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const validation = refundSchema.safeParse(body)
+    
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Invalid request data', details: validation.error.issues },
+        { status: 400 }
+      )
+    }
+
+    const { paymentId, amount, reason, description } = validation.data
+
+    // Find the payment
+    const payment = await prisma.payment.findFirst({
+      where: {
+        id: paymentId,
+        OR: [
+          { userId: user.id }, // User's own payment
+          {
+            appointment: {
+              trainer: {
+                userId: user.id // Trainer can refund their appointments
+              }
+            }
+          }
+        ]
+      },
+      include: {
+        appointment: {
+          include: { trainer: { include: { user: true } } }
+        },
+        refunds: true
+      }
+    })
+
+    if (!payment) {
+      return NextResponse.json({ error: 'Payment not found' }, { status: 404 })
+    }
+
+    if (payment.status !== 'succeeded') {
+      return NextResponse.json({ error: 'Payment cannot be refunded' }, { status: 400 })
+    }
+
+    // Check if already fully refunded
+    const totalRefunded = payment.refunds.reduce((sum, refund) => sum + refund.amount, 0)
+    const maxRefundable = payment.amount - totalRefunded
+
+    if (maxRefundable <= 0) {
+      return NextResponse.json({ error: 'Payment already fully refunded' }, { status: 400 })
+    }
+
+    const refundAmount = amount ? Math.min(amount, maxRefundable) : maxRefundable
+
+    if (!payment.stripePaymentIntentId) {
+      return NextResponse.json({ error: 'No Stripe payment intent found' }, { status: 400 })
+    }
+
+    // Create refund in Stripe
+    const refund = await StripeService.createRefund({
+      paymentIntentId: payment.stripePaymentIntentId,
+      amount: refundAmount,
+      reason
+    })
+
+    // If appointment payment, update appointment status
+    if (payment.appointmentId) {
+      await prisma.appointment.update({
+        where: { id: payment.appointmentId },
+        data: { 
+          isPaid: false,
+          cancelReason: description || 'Payment refunded'
+        }
+      })
+    }
+
+    // If package payment, handle package sessions
+    if (payment.packageId) {
+      // Mark unused package sessions as expired
+      await prisma.packageSession.updateMany({
+        where: {
+          packageId: payment.packageId,
+          isUsed: false
+        },
+        data: { expiresAt: new Date() }
+      })
+    }
+
+    return NextResponse.json({
+      success: true,
+      refund: {
+        id: refund.id,
+        amount: refund.amount / 100,
+        currency: refund.currency,
+        status: refund.status,
+        reason: refund.reason
+      }
+    })
+
+  } catch (error) {
+    console.error('Refund error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
+// Get refund history for user
+export async function GET(request: NextRequest) {
+  try {
+    const user = await verifyAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = Math.min(parseInt(searchParams.get('limit') || '10'), 50)
+    const skip = (page - 1) * limit
+
+    // Get user's refunds
+    const refunds = await prisma.refund.findMany({
+      where: {
+        payment: { userId: user.id }
+      },
+      include: {
+        payment: {
+          include: {
+            appointment: {
+              include: {
+                service: true,
+                trainer: { include: { user: true } }
+              }
+            },
+            package: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit
+    })
+
+    const total = await prisma.refund.count({
+      where: {
+        payment: { userId: user.id }
+      }
+    })
+
+    return NextResponse.json({
+      success: true,
+      refunds: refunds.map(refund => ({
+        id: refund.id,
+        amount: refund.amount,
+        currency: refund.currency,
+        status: refund.status,
+        reason: refund.reason,
+        createdAt: refund.createdAt,
+        payment: {
+          id: refund.payment.id,
+          amount: refund.payment.amount,
+          description: refund.payment.description,
+          appointment: refund.payment.appointment ? {
+            id: refund.payment.appointment.id,
+            date: refund.payment.appointment.date,
+            service: refund.payment.appointment.service?.name,
+            trainer: refund.payment.appointment.trainer.user.name
+          } : null,
+          package: refund.payment.package ? {
+            id: refund.payment.package.id,
+            name: refund.payment.package.name,
+            sessions: refund.payment.package.sessions
+          } : null
+        }
+      })),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    })
+
+  } catch (error) {
+    console.error('Get refunds error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
