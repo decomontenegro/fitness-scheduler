@@ -178,10 +178,10 @@ export default function TrainerDashboard() {
                   Mensagens
                 </Button>
               </Link>
-              <Link href="/schedule">
+              <Link href="/trainer/schedule">
                 <Button size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Novo Agendamento
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Minha Agenda
                 </Button>
               </Link>
               <Button size="sm" variant="outline" onClick={handleLogout}>
@@ -279,6 +279,72 @@ export default function TrainerDashboard() {
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Quick Access Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Link href="/trainer/schedule">
+            <Card className="hover-lift cursor-pointer">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+                        <Calendar className="h-6 w-6 text-primary-600 dark:text-primary-400" />
+                      </div>
+                      <h3 className="font-semibold">Minha Agenda</h3>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Visualize e gerencie seus agendamentos
+                    </p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-gray-400" />
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+          
+          <Link href="/trainer/availability">
+            <Card className="hover-lift cursor-pointer">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="p-2 bg-success-100 dark:bg-success-900/30 rounded-lg">
+                        <Clock className="h-6 w-6 text-success-600 dark:text-success-400" />
+                      </div>
+                      <h3 className="font-semibold">Disponibilidade</h3>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Configure seus horários de atendimento
+                    </p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-gray-400" />
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+          
+          <Link href="/trainer/services">
+            <Card className="hover-lift cursor-pointer">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="p-2 bg-warning-100 dark:bg-warning-900/30 rounded-lg">
+                        <Activity className="h-6 w-6 text-warning-600 dark:text-warning-400" />
+                      </div>
+                      <h3 className="font-semibold">Serviços</h3>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Gerencie seus tipos de treino e preços
+                    </p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-gray-400" />
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

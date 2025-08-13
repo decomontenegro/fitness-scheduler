@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste do Sistema FitScheduler</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        .info-box {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .info-box h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .account {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: white;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border: 1px solid #dee2e6;
+        }
+        .account .role {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .account .role.trainer {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+        .account .role.client {
+            background: #f3e5f5;
+            color: #6a1b9a;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin: 5px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        .btn.secondary {
+            background: #6c757d;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .feature {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .feature .icon {
+            font-size: 20px;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏋️ FitScheduler</h1>
+        <p class="subtitle">Sistema de Agendamento para Personal Trainers</p>
+        
+        <div class="status success">
+            ✅ Sistema funcionando em http://localhost:3001
+        </div>
+
+        <div class="info-box">
+            <h3>📱 Contas de Teste</h3>
+            
+            <div class="account">
+                <div>
+                    <strong>test-trainer@fitness.com</strong>
+                    <span class="role trainer">TRAINER</span>
+                </div>
+                <div>Senha: 123456</div>
+            </div>
+            
+            <div class="account">
+                <div>
+                    <strong>trainer2@test.com</strong>
+                    <span class="role trainer">TRAINER</span>
+                </div>
+                <div>Senha: 123456</div>
+            </div>
+            
+            <div class="account">
+                <div>
+                    <strong>trainer3@test.com</strong>
+                    <span class="role trainer">TRAINER</span>
+                </div>
+                <div>Senha: 123456</div>
+            </div>
+            
+            <div class="account">
+                <div>
+                    <strong>test-client@fitness.com</strong>
+                    <span class="role client">CLIENT</span>
+                </div>
+                <div>Senha: 123456</div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <h3>✨ Recursos Principais</h3>
+            <div class="features">
+                <div class="feature">
+                    <span class="icon">📅</span> Agendamento Online
+                </div>
+                <div class="feature">
+                    <span class="icon">👥</span> Gestão de Clientes
+                </div>
+                <div class="feature">
+                    <span class="icon">📊</span> Dashboard Analytics
+                </div>
+                <div class="feature">
+                    <span class="icon">💬</span> Chat Integrado
+                </div>
+                <div class="feature">
+                    <span class="icon">🔔</span> Notificações
+                </div>
+                <div class="feature">
+                    <span class="icon">📈</span> Relatórios
+                </div>
+            </div>
+        </div>
+
+        <div class="status warning">
+            ⚠️ Recursos opcionais desabilitados: Socket.io (chat em tempo real), Stripe (pagamentos)
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="http://localhost:3001" class="btn" target="_blank">
+                🚀 Acessar Sistema
+            </a>
+            <a href="http://localhost:3001/login" class="btn secondary" target="_blank">
+                🔐 Fazer Login
+            </a>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px; color: #666; font-size: 12px;">
+            <p>Ambiente: Produção Local | Porta: 3001 | Banco: SQLite</p>
+        </div>
+    </div>
+</body>
+</html>

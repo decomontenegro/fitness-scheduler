@@ -4,9 +4,9 @@ import crypto from 'crypto';
 import { prisma } from './prisma';
 import { NextRequest } from 'next/server';
 
-// JWT Configuration - hardcoded for development to ensure consistency
-const JWT_SECRET = 'fitness-scheduler-jwt-super-secure-secret-key-development-only-32-chars';
-const JWT_REFRESH_SECRET = 'fitness-scheduler-refresh-super-secure-secret-key-development-only-32';
+// JWT Configuration - use environment variables in production, fallback for development
+const JWT_SECRET = process.env.JWT_SECRET || 'fitness-scheduler-jwt-super-secure-secret-key-development-only-32-chars';
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'fitness-scheduler-refresh-super-secure-secret-key-development-only-32';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
 const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'fitness-scheduler-encryption-key-development-32';

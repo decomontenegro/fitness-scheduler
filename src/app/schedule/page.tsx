@@ -213,9 +213,16 @@ export default function SchedulePage() {
       
       const profileData = await profileResponse.json();
       
+      // Extract the client profile ID correctly
+      const clientProfileId = profileData.clientProfile?.id;
+      
+      if (!clientProfileId) {
+        throw new Error('Client profile not found');
+      }
+      
       const appointmentData = {
         trainerId: bookingData.trainer.id,
-        clientId: profileData.id, // Use profile ID, not user ID
+        clientId: clientProfileId, // Use the correct client profile ID
         serviceId: bookingData.service.id,
         date: bookingData.date.toISOString(),
         startTime: bookingData.startTime,

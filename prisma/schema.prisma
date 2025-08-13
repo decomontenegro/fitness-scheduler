@@ -43,9 +43,6 @@ model User {
   
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
-
-  // Stripe customer fields
-  stripeCustomerId  String?        @unique
   
   // Relations
   trainerProfile    TrainerProfile?

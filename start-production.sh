@@ -14,7 +14,7 @@ echo "✅ Iniciando servidor de produção..."
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "🌐 Aplicação disponível em:"
-echo "   http://localhost:3000"
+echo "   http://localhost:3001"
 echo ""
 echo "🔐 Credenciais de teste:"
 echo "   Trainer: test-trainer@fitness.com / 123456"
@@ -23,4 +23,4 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo ""
 
 # Iniciar servidor
-PORT=3000 npm run start
+PORT=3001 npm run start

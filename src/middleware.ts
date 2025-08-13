@@ -6,7 +6,15 @@ const protectedRoutes: string[] = [
   '/dashboard',
   '/appointments',
   '/messages',
-  '/schedule'
+  '/schedule',
+  '/trainer'
+];
+
+// Routes that require specific roles
+const trainerOnlyRoutes: string[] = [
+  '/trainer/availability',
+  '/trainer/services',
+  '/trainer/schedule'
 ];
 
 // Routes by role
@@ -15,17 +23,32 @@ const authRoutes = ['/login', '/register'];
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
+  // Create response with CSP headers
+  const response = NextResponse.next();
+  
+  // Add Content Security Policy headers to allow Google Fonts
+  response.headers.set(
+    'Content-Security-Policy',
+    "default-src 'self'; " +
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+    "font-src 'self' https://fonts.gstatic.com; " +
+    "script-src 'self' 'unsafe-eval' 'unsafe-inline'; " +
+    "connect-src 'self' ws://localhost:* wss://localhost:*; " +
+    "img-src 'self' data: blob:; " +
+    "frame-src 'self';"
+  );
+  
   // Skip middleware for API routes and static files
   if (pathname.startsWith('/api/') || 
       pathname.includes('.') || 
       pathname.startsWith('/_next/')) {
-    return NextResponse.next();
+    return response;
   }
   
   // Skip middleware for public helper pages
   const publicPages = ['/app-launcher.html', '/login-helper.html', '/reset-system.html'];
   if (publicPages.some(page => pathname.includes(page))) {
-    return NextResponse.next();
+    return response;
   }
   
   // Get tokens from cookies
@@ -45,12 +68,20 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
   
+  // Check if route is trainer-only
+  const isTrainerRoute = trainerOnlyRoutes.some(route => pathname.startsWith(route));
+  if (isTrainerRoute && tokenValue) {
+    // Note: In production, you'd want to decode and validate the JWT here
+    // For now, we'll rely on the page component to check the role
+    console.log(`[Middleware] Trainer route accessed: ${pathname}`);
+  }
+  
   // Don't auto-redirect from login if user has token
   // Let them navigate manually
   
   // For protected routes with a token, just pass through
   // The actual token validation will happen in the page/API route
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {
