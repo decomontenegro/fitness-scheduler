@@ -6,6 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
+    "start:prod": "sh start.sh",
     "lint": "next lint",
     "seed": "tsx prisma/seed.ts",
     "seed-production": "tsx prisma/seed-production.ts",

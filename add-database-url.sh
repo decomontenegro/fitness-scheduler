@@ -1,0 +1,31 @@
+#!/bin/bash
+
+echo "🔧 Adicionando DATABASE_URL ao Railway"
+echo "======================================"
+echo ""
+
+cd "/Users/andremontenegro/agendamento claude code/fitness-scheduler"
+
+echo "⚠️  IMPORTANTE: O comando abaixo vai adicionar a DATABASE_URL"
+echo "como uma referência ao banco PostgreSQL do Railway."
+echo ""
+echo "Execute este comando EXATAMENTE como está:"
+echo ""
+echo -e "\033[0;32m"
+echo 'railway variables set DATABASE_URL="${{Postgres.DATABASE_URL}}"'
+echo -e "\033[0m"
+echo ""
+echo "ATENÇÃO: Use aspas duplas e os colchetes duplos {{ }}"
+echo ""
+echo "Após executar, faça:"
+echo "1. railway up"
+echo "2. railway logs"
+echo ""
+echo "Alternativamente, você pode ir no Railway Dashboard:"
+echo "1. https://railway.app/dashboard"
+echo "2. Clique no serviço fitness-scheduler"
+echo "3. Vá em Variables"
+echo "4. Clique em 'Add Variable'"
+echo "5. Nome: DATABASE_URL"
+echo "6. Clique em 'Add Reference' → Postgres → DATABASE_URL"
+echo ""

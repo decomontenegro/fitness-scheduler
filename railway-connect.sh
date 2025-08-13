@@ -1,0 +1,78 @@
+#!/bin/bash
+
+# 🚂 Conectar ao Railway e obter informações
+echo "🚂 Conectando ao Railway"
+echo "========================"
+echo ""
+
+# Cores
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+cd "/Users/andremontenegro/agendamento claude code/fitness-scheduler"
+
+echo -e "${BLUE}📋 Instruções para conectar:${NC}"
+echo ""
+echo "1. Execute este comando:"
+echo -e "${GREEN}railway link${NC}"
+echo ""
+echo "2. Escolha:"
+echo "   - Workspace: decomontenegro's Projects"
+echo "   - Project: fitness-scheduler"
+echo "   - Environment: production"
+echo "   - Service: (escolha o serviço web principal, não o Postgres)"
+echo ""
+echo "3. Depois execute:"
+echo -e "${GREEN}railway status${NC}"
+echo ""
+echo "4. Para ver a URL do app:"
+echo -e "${GREEN}railway domain${NC}"
+echo ""
+echo "5. Para ver os logs:"
+echo -e "${GREEN}railway logs${NC}"
+echo ""
+echo "6. Para ver as variáveis:"
+echo -e "${GREEN}railway variables${NC}"
+echo ""
+echo "7. Para fazer redeploy:"
+echo -e "${GREEN}railway up${NC}"
+echo ""
+
+echo -e "${YELLOW}⚠️  IMPORTANTE:${NC}"
+echo "Se o comando 'railway domain' não retornar nada,"
+echo "você precisa gerar um domínio no Railway Dashboard:"
+echo ""
+echo "1. Acesse: https://railway.app/dashboard"
+echo "2. Clique no serviço fitness-scheduler"
+echo "3. Em Settings → Networking → Generate Domain"
+echo ""
+
+echo -e "${BLUE}🔧 Comandos rápidos para copiar e colar:${NC}"
+echo ""
+echo "# Conectar ao serviço"
+echo "railway link"
+echo ""
+echo "# Ver status"
+echo "railway status"
+echo ""
+echo "# Ver domínio"
+echo "railway domain"
+echo ""
+echo "# Ver logs"
+echo "railway logs"
+echo ""
+echo "# Ver e configurar variáveis"
+echo "railway variables"
+echo "railway variables set DATABASE_URL=\${{Postgres.DATABASE_URL}}"
+echo "railway variables set NODE_ENV=production"
+echo "railway variables set JWT_SECRET=fitness-scheduler-jwt-super-secure-production-key-2024"
+echo "railway variables set JWT_EXPIRES_IN=1h"
+echo "railway variables set NEXTAUTH_SECRET=fitness-scheduler-nextauth-production-secret-2024"
+echo "railway variables set ENCRYPTION_KEY=fitness-scheduler-encryption-production-key-32"
+echo ""
+echo "# Fazer deploy"
+echo "railway up"
+echo ""
