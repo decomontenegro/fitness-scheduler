@@ -52,8 +52,12 @@ export default function LoginPage() {
         localStorage.setItem('token', token);  // Save as 'token' for compatibility
         localStorage.setItem('accessToken', token);  // Also save as accessToken
         
-        // Set cookie for middleware
-        document.cookie = `auth-token=${token}; path=/; max-age=${60 * 60 * 24 * 7}`;
+        // Set cookie for middleware (with SameSite and Secure for production)
+        const isProduction = window.location.hostname !== 'localhost';
+        const cookieOptions = isProduction 
+          ? `auth-token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax; Secure`
+          : `auth-token=${token}; path=/; max-age=${60 * 60 * 24 * 7}`;
+        document.cookie = cookieOptions;
         
         // Handle 2FA if required
         if (result.requiresTwoFactor) {

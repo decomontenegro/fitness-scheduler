@@ -11,6 +11,7 @@
     "seed": "tsx prisma/seed.ts",
     "seed-production": "tsx prisma/seed-production.ts",
     "check-users": "tsx prisma/check-test-users.ts",
+    "fix-production-data": "tsx fix-production-data.ts",
     "diagnose": "tsx scripts/diagnose-production.ts",
     "seed-payments": "tsx src/scripts/seedPlans.ts",
     "test": "jest",
