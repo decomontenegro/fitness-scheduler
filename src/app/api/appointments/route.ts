@@ -16,12 +16,43 @@ const createAppointmentSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id');
-    const userRole = request.headers.get('x-user-role');
-    
-    if (!userId || !userRole) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // Get auth token
+    const token = request.cookies.get('auth-token')?.value || 
+                  request.cookies.get('access-token')?.value ||
+                  request.headers.get('authorization')?.replace('Bearer ', '');
+
+    if (!token) {
+      return NextResponse.json({ 
+        error: 'Unauthorized - No token provided' 
+      }, { status: 401 });
     }
+
+    // Import verifyToken
+    const { verifyToken } = await import('@/lib/auth');
+    
+    // Verify token
+    let payload;
+    try {
+      payload = verifyToken(token);
+    } catch (error) {
+      return NextResponse.json({ 
+        error: 'Invalid or expired token' 
+      }, { status: 401 });
+    }
+
+    const userId = payload.userId;
+    
+    // Get user to check role
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true }
+    });
+    
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+    
+    const userRole = user.role;
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
@@ -115,12 +146,43 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id');
-    const userRole = request.headers.get('x-user-role');
-    
-    if (!userId || !userRole) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // Get auth token
+    const token = request.cookies.get('auth-token')?.value || 
+                  request.cookies.get('access-token')?.value ||
+                  request.headers.get('authorization')?.replace('Bearer ', '');
+
+    if (!token) {
+      return NextResponse.json({ 
+        error: 'Unauthorized - No token provided' 
+      }, { status: 401 });
     }
+
+    // Import verifyToken
+    const { verifyToken } = await import('@/lib/auth');
+    
+    // Verify token
+    let payload;
+    try {
+      payload = verifyToken(token);
+    } catch (error) {
+      return NextResponse.json({ 
+        error: 'Invalid or expired token' 
+      }, { status: 401 });
+    }
+
+    const userId = payload.userId;
+    
+    // Get user to check role
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true }
+    });
+    
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+    
+    const userRole = user.role;
 
     const body = await request.json();
     const validatedData = createAppointmentSchema.parse(body);
@@ -210,10 +272,10 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(appointment, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid data', details: error.errors },
+        { error: 'Invalid data', details: error.issues },
         { status: 400 }
       );
     }

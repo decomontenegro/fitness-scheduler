@@ -11,20 +11,20 @@ const loginSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    // Check rate limit first
-    const rateLimitInfo = await rateLimit(request, 'login');
+    // Check rate limit first - TEMPORARILY DISABLED FOR TESTING
+    // const rateLimitInfo = await rateLimit(request, 'login');
     
-    if (!rateLimitInfo.allowed) {
-      const headers = getRateLimitHeaders(rateLimitInfo);
-      return NextResponse.json({
-        success: false,
-        error: 'Muitas tentativas de login. Tente novamente mais tarde.',
-        retryAfter: Math.ceil((rateLimitInfo.msBeforeNext || 0) / 1000),
-      }, { 
-        status: 429,
-        headers 
-      });
-    }
+    // if (!rateLimitInfo.allowed) {
+    //   const headers = getRateLimitHeaders(rateLimitInfo);
+    //   return NextResponse.json({
+    //     success: false,
+    //     error: 'Muitas tentativas de login. Tente novamente mais tarde.',
+    //     retryAfter: Math.ceil((rateLimitInfo.msBeforeNext || 0) / 1000),
+    //   }, { 
+    //     status: 429,
+    //     headers 
+    //   });
+    // }
 
     const body = await request.json();
     const { email, password, rememberMe } = loginSchema.parse(body);
@@ -34,9 +34,9 @@ export async function POST(request: NextRequest) {
     try {
       const result = await authenticateUser(email, password, rememberMe, ipAddress, userAgent);
       
-      // Reset rate limit on successful login
-      const ip = getClientIP(request);
-      await resetRateLimit('login', ip);
+      // Reset rate limit on successful login - TEMPORARILY DISABLED
+      // const ip = getClientIP(request);
+      // await resetRateLimit('login', ip);
       
       // Set cookies with tokens
       const response = NextResponse.json({

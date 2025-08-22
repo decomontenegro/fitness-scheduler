@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
-import { Toaster } from "react-hot-toast";
+import { LoadingProvider } from "@/contexts/LoadingContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { LoadingOverlay } from "@/components/ui/LoadingOverlay";
+import { ToastProvider } from "@/components/ui/Toast";
 import "./globals.css";
 
 const inter = Inter({
@@ -33,35 +36,17 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${poppins.variable} font-sans antialiased h-full bg-background text-foreground`}
       >
-        <AuthProvider>
-          <NotificationProvider>
-            {children}
-            <Toaster
-              position="top-right"
-              toastOptions={{
-                duration: 5000,
-                style: {
-                  background: '#363636',
-                  color: '#fff',
-                },
-                success: {
-                  duration: 4000,
-                  iconTheme: {
-                    primary: '#10b981',
-                    secondary: '#fff',
-                  },
-                },
-                error: {
-                  duration: 6000,
-                  iconTheme: {
-                    primary: '#ef4444',
-                    secondary: '#fff',
-                  },
-                },
-              }}
-            />
-          </NotificationProvider>
-        </AuthProvider>
+        <ErrorBoundary>
+          <LoadingProvider>
+            <AuthProvider>
+              <NotificationProvider>
+                {children}
+                <LoadingOverlay />
+                <ToastProvider />
+              </NotificationProvider>
+            </AuthProvider>
+          </LoadingProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

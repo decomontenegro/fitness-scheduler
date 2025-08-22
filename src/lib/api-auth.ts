@@ -15,9 +15,15 @@ export async function withAuth(
   handler: (req: AuthenticatedRequest) => Promise<NextResponse>
 ) {
   try {
-    // Get token from Authorization header
+    // Get token from Authorization header or cookies
     const authHeader = request.headers.get('authorization');
-    const token = authHeader?.replace('Bearer ', '');
+    let token = authHeader?.replace('Bearer ', '');
+
+    // If no token in header, check cookies
+    if (!token) {
+      token = request.cookies.get('auth-token')?.value || 
+              request.cookies.get('access-token')?.value;
+    }
 
     if (!token) {
       return NextResponse.json(

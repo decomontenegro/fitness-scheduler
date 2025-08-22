@@ -81,6 +81,7 @@ model TrainerProfile {
   appointments      Appointment[]  @relation("TrainerAppointments")
   services          Service[]
   availability      Availability[]
+  blockedDates      BlockedDate[]
   reviews           Review[]
   clients           ClientProfile[] @relation("TrainerClients")
   packages          Package[]
@@ -135,6 +136,19 @@ model Availability {
   updatedAt         DateTime       @updatedAt
 
   @@unique([trainerId, dayOfWeek, startTime])
+}
+
+// Blocked dates for trainers
+model BlockedDate {
+  id                String         @id @default(cuid())
+  trainerId         String
+  trainer           TrainerProfile @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+  date              DateTime
+  reason            String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@unique([trainerId, date])
 }
 
 // Appointment model

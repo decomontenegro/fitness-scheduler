@@ -1,0 +1,53 @@
+{
+  "cookies": [
+    {
+      "name": "access-token",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbWVkYnZmZjIwMDAwMmc4dXU0eDM0ODQ1IiwiZW1haWwiOiJ0cmFpbmVyQHRlc3QuY29tIiwicm9sZSI6IlRSQUlORVIiLCJkZXZpY2VJZCI6IjJiZDM1ZDA4NmUzNWFmODciLCJ0b2tlblR5cGUiOiJhY2Nlc3MiLCJpYXQiOjE3NTUyOTM1MTUsImV4cCI6MTc1NTI5NzExNX0.-TXbYcxOGPVpDeRPYw6xmASLTlzamSIJqF3J8IZXYqI",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1755297116.279783,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "auth-token",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbWVkYnZmZjIwMDAwMmc4dXU0eDM0ODQ1IiwiZW1haWwiOiJ0cmFpbmVyQHRlc3QuY29tIiwicm9sZSI6IlRSQUlORVIiLCJkZXZpY2VJZCI6IjJiZDM1ZDA4NmUzNWFmODciLCJ0b2tlblR5cGUiOiJhY2Nlc3MiLCJpYXQiOjE3NTUyOTM1MTUsImV4cCI6MTc1NTI5NzExNX0.-TXbYcxOGPVpDeRPYw6xmASLTlzamSIJqF3J8IZXYqI",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1755297116.280058,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "refresh-token",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbWVkYnZmZjIwMDAwMmc4dXU0eDM0ODQ1IiwiZW1haWwiOiJ0cmFpbmVyQHRlc3QuY29tIiwicm9sZSI6IlRSQUlORVIiLCJkZXZpY2VJZCI6IjJiZDM1ZDA4NmUzNWFmODciLCJ0b2tlblR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzU1MjkzNTE1LCJleHAiOjE3NTU4OTgzMTV9.YX4-rYBzeXkHVmCk6VJNYBAEVGvoPRmmZeLK3Gep6GU",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1755898316.280071,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": [
+    {
+      "origin": "http://localhost:3001",
+      "localStorage": [
+        {
+          "name": "accessToken",
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbWVkYnZmZjIwMDAwMmc4dXU0eDM0ODQ1IiwiZW1haWwiOiJ0cmFpbmVyQHRlc3QuY29tIiwicm9sZSI6IlRSQUlORVIiLCJkZXZpY2VJZCI6IjJiZDM1ZDA4NmUzNWFmODciLCJ0b2tlblR5cGUiOiJhY2Nlc3MiLCJpYXQiOjE3NTUyOTM1MTUsImV4cCI6MTc1NTI5NzExNX0.-TXbYcxOGPVpDeRPYw6xmASLTlzamSIJqF3J8IZXYqI"
+        },
+        {
+          "name": "user",
+          "value": "{\"id\":\"cmedbvff200002g8uu4x34845\",\"email\":\"trainer@test.com\",\"name\":\"Test Trainer\",\"phone\":\"11999999999\",\"whatsapp\":null,\"avatar\":null,\"role\":\"TRAINER\",\"isActive\":true,\"emailVerified\":null,\"emailNotifications\":true,\"smsNotifications\":false,\"whatsappNotifications\":true,\"pushNotifications\":true,\"twoFactorEnabled\":false,\"lastLoginAt\":\"2025-08-15T21:19:39.117Z\",\"loginAttempts\":0,\"lockoutUntil\":null,\"passwordResetToken\":null,\"passwordResetExpiry\":null,\"createdAt\":\"2025-08-15T21:16:05.198Z\",\"updatedAt\":\"2025-08-15T21:19:39.118Z\"}"
+        },
+        {
+          "name": "token",
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbWVkYnZmZjIwMDAwMmc4dXU0eDM0ODQ1IiwiZW1haWwiOiJ0cmFpbmVyQHRlc3QuY29tIiwicm9sZSI6IlRSQUlORVIiLCJkZXZpY2VJZCI6IjJiZDM1ZDA4NmUzNWFmODciLCJ0b2tlblR5cGUiOiJhY2Nlc3MiLCJpYXQiOjE3NTUyOTM1MTUsImV4cCI6MTc1NTI5NzExNX0.-TXbYcxOGPVpDeRPYw6xmASLTlzamSIJqF3J8IZXYqI"
+        }
+      ]
+    }
+  ]
+}

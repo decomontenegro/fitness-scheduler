@@ -104,10 +104,11 @@ export default function SchedulePage() {
       const response = await fetch('/api/trainers');
       const data = await response.json();
       
-      if (data.success) {
-        setTrainers(data.data);
+      if (data.success && data.trainers) {
+        setTrainers(data.trainers);
       } else {
         console.error('Error fetching trainers:', data.error);
+        setTrainers([]);
       }
     } catch (error) {
       console.error('Error fetching trainers:', error);
@@ -128,7 +129,7 @@ export default function SchedulePage() {
       const data = await response.json();
       
       if (data.success) {
-        setAvailableSlots(data.data.availableSlots || []);
+        setAvailableSlots(data.slots || []);
       } else {
         console.error('Error fetching availability:', data.error);
         setAvailableSlots([]);
@@ -384,7 +385,7 @@ export default function SchedulePage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {trainers.map((trainer) => (
+                {trainers && trainers.length > 0 ? trainers.map((trainer) => (
                   <Card
                     key={trainer.id}
                     className="cursor-pointer hover-lift p-6 transition-all duration-300"
@@ -432,11 +433,15 @@ export default function SchedulePage() {
                         {trainer.experience} anos de experiência
                       </span>
                       <span className="text-lg font-bold text-primary-600 dark:text-primary-400">
-                        {trainer.services.length} serviços
+                        {trainer.services?.length || 0} serviços
                       </span>
                     </div>
                   </Card>
-                ))}
+                )) : (
+                  <div className="text-center py-8 text-gray-500">
+                    Nenhum trainer disponível no momento
+                  </div>
+                )}
               </div>
             )}
           </div>

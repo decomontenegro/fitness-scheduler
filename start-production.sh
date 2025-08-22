@@ -9,11 +9,16 @@ echo "  NODE_ENV: $NODE_ENV"
 echo "  DATABASE_URL exists: $([ -n "$DATABASE_URL" ] && echo "Yes" || echo "No")"
 echo "  PORT: ${PORT:-3000}"
 
-# Check DATABASE_URL
+# Check DATABASE_URL or use DATABASE_PUBLIC_URL
 if [ -z "$DATABASE_URL" ]; then
-    echo "❌ ERROR: DATABASE_URL is not set!"
-    echo "Please configure DATABASE_URL in Railway variables."
-    exit 1
+    if [ -n "$DATABASE_PUBLIC_URL" ]; then
+        echo "⚠️ DATABASE_URL not set, using DATABASE_PUBLIC_URL"
+        export DATABASE_URL="$DATABASE_PUBLIC_URL"
+    else
+        echo "❌ ERROR: Neither DATABASE_URL nor DATABASE_PUBLIC_URL is set!"
+        echo "Please configure DATABASE_URL in Railway variables."
+        exit 1
+    fi
 fi
 
 echo "✅ DATABASE_URL is configured"

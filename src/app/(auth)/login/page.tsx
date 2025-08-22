@@ -52,6 +52,9 @@ export default function LoginPage() {
         localStorage.setItem('token', token);  // Save as 'token' for compatibility
         localStorage.setItem('accessToken', token);  // Also save as accessToken
         
+        // Set cookie for middleware
+        document.cookie = `auth-token=${token}; path=/; max-age=${60 * 60 * 24 * 7}`;
+        
         // Handle 2FA if required
         if (result.requiresTwoFactor) {
           // Redirect to 2FA verification page
@@ -59,12 +62,14 @@ export default function LoginPage() {
           return;
         }
         
-        // Force a page reload to ensure cookies are set and middleware runs
-        if (result.user.role === 'TRAINER') {
-          window.location.href = '/dashboard/trainer';
-        } else {
-          window.location.href = '/dashboard/client';
-        }
+        // Use Next.js router instead of window.location to preserve state
+        setTimeout(() => {
+          if (result.user.role === 'TRAINER') {
+            router.push('/dashboard/trainer');
+          } else {
+            router.push('/dashboard/client');
+          }
+        }, 100);
       } else {
         setError(result.error || 'Erro ao fazer login');
       }

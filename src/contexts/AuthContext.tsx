@@ -14,7 +14,7 @@ interface User {
 }
 
 interface AuthContextType {
-  user: User | null;
+  user: User | null | undefined;
   token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -25,7 +25,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null | undefined>(undefined);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -38,8 +38,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (storedUser && storedToken) {
       setUser(JSON.parse(storedUser));
       setToken(storedToken);
+      // Set cookie for middleware
+      document.cookie = `auth-token=${storedToken}; path=/; max-age=${60 * 60 * 24 * 7}`;
+      setLoading(false);
+    } else {
+      // Check if we have a cookie but no localStorage (happens after login redirect)
+      const cookies = document.cookie.split(';');
+      let authToken = null;
+      for (const cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'auth-token') {
+          authToken = value;
+          break;
+        }
+      }
+      
+      if (authToken) {
+        // We have a token in cookie, fetch user data
+        fetch('/api/users/me', {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.user) {
+            setUser(data.user);
+            setToken(authToken);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            localStorage.setItem('token', authToken);
+          } else {
+            setUser(null);
+          }
+          setLoading(false);
+        })
+        .catch(() => {
+          setUser(null);
+          setLoading(false);
+        });
+      } else {
+        setUser(null);
+        setLoading(false);
+      }
     }
-    setLoading(false);
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -53,6 +94,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(authToken);
       localStorage.setItem('user', JSON.stringify(data.user));
       localStorage.setItem('token', authToken);
+      
+      // Set cookie for middleware
+      document.cookie = `auth-token=${authToken}; path=/; max-age=${60 * 60 * 24 * 7}`;
 
       // Small delay to ensure localStorage is updated
       setTimeout(() => {

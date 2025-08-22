@@ -9,9 +9,10 @@ const updateStatusSchema = z.object({
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const userId = request.headers.get('x-user-id');
     const userRole = request.headers.get('x-user-role');
     
@@ -24,7 +25,7 @@ export async function PUT(
 
     // Get the appointment
     const appointment = await prisma.appointment.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         trainer: true,
         client: true,
@@ -57,7 +58,7 @@ export async function PUT(
 
     // Update the appointment
     const updatedAppointment = await prisma.appointment.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         status,
         ...(reason && { notes: appointment.notes ? `${appointment.notes}\n\n[Status Update]: ${reason}` : reason }),
@@ -116,9 +117,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const userId = request.headers.get('x-user-id');
     const userRole = request.headers.get('x-user-role');
     
@@ -128,7 +130,7 @@ export async function DELETE(
 
     // Get the appointment
     const appointment = await prisma.appointment.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         trainer: true,
         client: true,

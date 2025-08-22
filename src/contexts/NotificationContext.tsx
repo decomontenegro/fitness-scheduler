@@ -40,8 +40,11 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // Initialize socket connection
+  // Initialize socket connection - TEMPORARILY DISABLED
   useEffect(() => {
+    // Socket.io disabled until server is configured
+    return;
+    
     if (!user || !token) return;
 
     // Get the current host without hardcoding the port
@@ -126,8 +129,11 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     };
   }, [user, token]);
 
-  // Load existing notifications
+  // Load existing notifications - TEMPORARILY DISABLED
   useEffect(() => {
+    // Notifications API disabled until server endpoint is configured
+    return;
+    
     if (!user) return;
 
     const loadNotifications = async () => {

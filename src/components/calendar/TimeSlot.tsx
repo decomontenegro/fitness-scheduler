@@ -24,16 +24,25 @@ export default function TimeSlot({
   price,
 }: TimeSlotProps) {
   const formatTime = (timeString: string) => {
+    // If timeString is already in HH:MM format, return it
+    if (/^\d{2}:\d{2}$/.test(timeString)) {
+      return timeString;
+    }
+    // Otherwise try to parse as date
     const date = new Date(timeString);
-    return date.toLocaleTimeString('pt-BR', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    if (!isNaN(date.getTime())) {
+      return date.toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    }
+    // Fallback to original string
+    return timeString;
   };
 
   const isPast = () => {
-    const slotTime = new Date(startTime);
-    return slotTime <= new Date();
+    // Can't determine if past without full date, so return false
+    return false;
   };
 
   const isDisabled = disabled || !available || isPast();

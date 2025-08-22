@@ -1,30 +1,55 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+// Public routes that don't require authentication
+const publicRoutes: string[] = [
+  '/login',
+  '/register',
+  '/forgot-password',
+  '/reset-password',
+  '/contact',
+  '/about',
+  '/pricing',
+  '/terms',
+  '/privacy'
+];
+
 // Routes that require authentication
 const protectedRoutes: string[] = [
   '/dashboard',
-  '/appointments',
+  '/appointments', 
   '/messages',
   '/schedule',
-  '/trainer'
+  '/trainer',
+  '/notifications',
+  '/analytics',
+  '/client-analytics',
+  '/admin-analytics',
+  '/reports',
+  '/profile',
+  '/settings',
+  '/booking',
+  '/booking-test'
 ];
 
 // Routes that require specific roles
 const trainerOnlyRoutes: string[] = [
   '/trainer/availability',
   '/trainer/services',
-  '/trainer/schedule'
+  '/trainer/schedule',
+  '/admin-analytics',
+  '/reports'
 ];
 
-// Routes by role
-const authRoutes = ['/login', '/register'];
+const clientOnlyRoutes: string[] = [
+  '/client-analytics'
+];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
   // Create response with CSP headers
-  const response = NextResponse.next();
+  let response = NextResponse.next();
   
   // Add Content Security Policy headers to allow Google Fonts
   response.headers.set(
@@ -33,8 +58,8 @@ export async function middleware(request: NextRequest) {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
     "font-src 'self' https://fonts.gstatic.com; " +
     "script-src 'self' 'unsafe-eval' 'unsafe-inline'; " +
-    "connect-src 'self' ws://localhost:* wss://localhost:*; " +
-    "img-src 'self' data: blob:; " +
+    "connect-src 'self' ws://localhost:* wss://localhost:* http://localhost:* https://*; " +
+    "img-src 'self' data: blob: https:; " +
     "frame-src 'self';"
   );
   
@@ -59,28 +84,59 @@ export async function middleware(request: NextRequest) {
   console.log(`[Middleware] Path: ${pathname}`);
   console.log(`[Middleware] Has token:`, !!tokenValue);
   
+  // Check if it's a public route
+  const isPublicRoute = publicRoutes.some(route => pathname === route || pathname.startsWith(route));
+  
+  // Special handling for homepage
+  if (pathname === '/') {
+    if (!tokenValue) {
+      // If user is not authenticated, show landing page (keep on /)
+      console.log(`[Middleware] Homepage - no auth, showing landing page`);
+      return response;
+    } else {
+      // If user is authenticated, redirect to appropriate dashboard
+      console.log(`[Middleware] Homepage - authenticated, redirecting to dashboard`);
+      // TODO: Decode token to get user role and redirect accordingly
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+  }
+  
+  // If it's a public route, allow access
+  if (isPublicRoute) {
+    // If user is already logged in and tries to access login/register, redirect to dashboard
+    if (tokenValue && (pathname === '/login' || pathname === '/register')) {
+      console.log(`[Middleware] User already authenticated, redirecting to dashboard`);
+      return NextResponse.redirect(new URL('/dashboard/client', request.url));
+    }
+    return response;
+  }
+  
   // Check if route needs protection
   const needsAuth = protectedRoutes.some(route => pathname.startsWith(route));
   
   // If route needs auth and no token, redirect to login
   if (needsAuth && !tokenValue) {
-    console.log(`[Middleware] No token, redirecting to login`);
-    return NextResponse.redirect(new URL('/login', request.url));
+    console.log(`[Middleware] Protected route without token, redirecting to login`);
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('from', pathname);
+    return NextResponse.redirect(loginUrl);
   }
   
   // Check if route is trainer-only
   const isTrainerRoute = trainerOnlyRoutes.some(route => pathname.startsWith(route));
   if (isTrainerRoute && tokenValue) {
-    // Note: In production, you'd want to decode and validate the JWT here
-    // For now, we'll rely on the page component to check the role
+    // TODO: Decode JWT and check if user role is TRAINER
     console.log(`[Middleware] Trainer route accessed: ${pathname}`);
   }
   
-  // Don't auto-redirect from login if user has token
-  // Let them navigate manually
+  // Check if route is client-only
+  const isClientRoute = clientOnlyRoutes.some(route => pathname.startsWith(route));
+  if (isClientRoute && tokenValue) {
+    // TODO: Decode JWT and check if user role is CLIENT
+    console.log(`[Middleware] Client route accessed: ${pathname}`);
+  }
   
-  // For protected routes with a token, just pass through
-  // The actual token validation will happen in the page/API route
+  // For all other routes with a token, pass through
   return response;
 }
 
