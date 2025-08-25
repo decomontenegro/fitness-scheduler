@@ -102,10 +102,20 @@ export function SimpleBookingFlow() {
         return;
       }
 
+      // Get token from localStorage
+      const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
+      
+      if (!token) {
+        toast.error('Você precisa estar logado para fazer um agendamento');
+        window.location.href = '/login';
+        return;
+      }
+
       const response = await fetch('/api/bookings/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           trainerId: selectedTrainer.id,

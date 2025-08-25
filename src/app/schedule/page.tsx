@@ -200,9 +200,17 @@ export default function SchedulePage() {
 
     setLoadingStates(prev => ({ ...prev, booking: true }));
     try {
+      // Get token from localStorage
+      const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
+      
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
       // Get user profile
       const profileResponse = await fetch('/api/users/profile', {
         headers: {
+          'Authorization': `Bearer ${token}`,
           'x-user-id': user.id,
           'x-user-role': user.role,
         },
@@ -236,6 +244,7 @@ export default function SchedulePage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
           'x-user-id': user.id,
           'x-user-role': user.role,
         },
